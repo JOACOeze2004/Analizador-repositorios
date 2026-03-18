@@ -3,9 +3,12 @@ from github import GithubException
 import re
  
 IGNORED_PATHS = {
-    'node_modules', 'vendor', 'dist', 'build',
-    'bootstrap', 'jquery', 'venv', '.venv'
+    'node_modules', 'vendor', 'dist', 'build', 'venv', '.venv'
 }
+
+IGNORED_FILENAME_PATTERNS = [
+    'bootstrap', 'jquery', 'popper', 'fontawesome', 'lodash', 'moment'
+]
 
 SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript'}
 GOOD_LAST_COMMIT = 30
@@ -238,6 +241,10 @@ class AnalyzerService:
             return True
         parts = path.split('/')
         if any(part in IGNORED_PATHS for part in parts):
+            return True
+        # Archivos de librerías conocidas por nombre
+        filename = parts[-1].lower()
+        if any(pattern in filename for pattern in IGNORED_FILENAME_PATTERNS):
             return True
         return False
  
