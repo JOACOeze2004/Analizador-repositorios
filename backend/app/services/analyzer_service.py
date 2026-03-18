@@ -2,6 +2,10 @@ from radon.visitors import ComplexityVisitor
 from github import GithubException
 import re
  
+IGNORED_PATHS = {
+    'node_modules', 'vendor', 'dist', 'build',
+    'bootstrap', 'jquery', 'venv', '.venv'
+}
 
 SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript'}
 GOOD_LAST_COMMIT = 30
@@ -22,15 +26,15 @@ FUNCTION_LENGTH = {
 class AnalyzerService:
     
     def analyze_functions(self, repo, languages):
-        repo_languages   = set(languages.keys())
+        repo_languages = set(languages.keys())
         langs_to_analyze = repo_languages & SUPPORTED_LANGUAGES
  
         if not langs_to_analyze:
             return {
                 'supported': False,
-                'message':   f'Análisis de funciones no soportado para: {", ".join(repo_languages)}',
+                'message': f'Análisis de funciones no soportado para: {", ".join(repo_languages)}',
                 'functions': [],
-                'summary':   {'ok': 0, 'warning': 0, 'critical': 0}
+                'summary': {'ok': 0, 'warning': 0, 'critical': 0}
             }
  
         extensions = self._get_extensions(langs_to_analyze)
@@ -40,14 +44,16 @@ class AnalyzerService:
         except GithubException:
             return {
                 'supported': False,
-                'message':   'No se pudo acceder al árbol de archivos.',
+                'message': 'No se pudo acceder al árbol de archivos.',
                 'functions': [],
-                'summary':   {'ok': 0, 'warning': 0, 'critical': 0}
+                'summary': {'ok': 0, 'warning': 0, 'critical': 0}
             }
         
         files_to_analyze = [
             item for item in tree.tree
-            if item.type == 'blob' and self._has_extension(item.path, extensions)
+            if item.type == 'blob' 
+            and self._has_extension(item.path, extensions)
+            and not self._is_ignored(item.path)
         ][:50]
  
         functions = []
@@ -55,7 +61,7 @@ class AnalyzerService:
  
         for file_item in files_to_analyze:
             try:
-                content     = repo.get_contents(file_item.path)
+                content = repo.get_contents(file_item.path)
                 source_code = content.decoded_content.decode('utf-8', errors='ignore')
             except Exception:
                 continue
@@ -69,9 +75,9 @@ class AnalyzerService:
         functions.sort(key=lambda x: order[x['status']])
  
         return {
-            'supported':      True,
-            'functions':      functions,
-            'summary':        summary,
+            'supported': True,
+            'functions': functions,
+            'summary': summary,
             'files_analyzed': len(files_to_analyze),
         }
 
@@ -178,9 +184,8 @@ class AnalyzerService:
         return functions
  
     def _analyze_js(self, source_code, filepath):
-        """Análisis de funciones JS/TS contando balance de llaves"""
         functions = []
-        lines     = source_code.split('\n')
+        lines = source_code.split('\n')
  
         func_pattern = re.compile(
             r'(function\s+(\w+)\s*\(|const\s+(\w+)\s*=\s*(?:async\s*)?\(.*\)\s*=>|(\w+)\s*:\s*function\s*\()'
@@ -227,4 +232,12 @@ class AnalyzerService:
  
     def _has_extension(self, path, extensions):
         return any(path.endswith(ext) for ext in extensions)
+    
+    def _is_ignored(self, path):
+        if path.endswith('.min.js'):
+            return True
+        parts = path.split('/')
+        if any(part in IGNORED_PATHS for part in parts):
+            return True
+        return False
  
