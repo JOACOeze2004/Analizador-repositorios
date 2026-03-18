@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class config:
+class Config:
     GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
