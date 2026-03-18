@@ -1,0 +1,230 @@
+from radon.visitors import ComplexityVisitor
+from github import GithubException
+import re
+ 
+
+SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript'}
+GOOD_LAST_COMMIT = 30
+MID_LAST_COMMIT = 90
+BAD_LAST_COMMIT = 180
+
+LANGUAGE_EXTENSIONS = {
+    'Python':     ['.py'],
+    'JavaScript': ['.js', '.jsx'],
+    'TypeScript': ['.ts', '.tsx'],
+}
+
+FUNCTION_LENGTH = {
+    'ok': 20, 
+    'warning':30, 
+}
+
+class AnalyzerService:
+    
+    def analyze_functions(self, repo, languages):
+        repo_languages   = set(languages.keys())
+        langs_to_analyze = repo_languages & SUPPORTED_LANGUAGES
+ 
+        if not langs_to_analyze:
+            return {
+                'supported': False,
+                'message':   f'Análisis de funciones no soportado para: {", ".join(repo_languages)}',
+                'functions': [],
+                'summary':   {'ok': 0, 'warning': 0, 'critical': 0}
+            }
+ 
+        extensions = self._get_extensions(langs_to_analyze)
+ 
+        try:
+            tree = repo.get_git_tree(repo.default_branch, recursive=True)
+        except GithubException:
+            return {
+                'supported': False,
+                'message':   'No se pudo acceder al árbol de archivos.',
+                'functions': [],
+                'summary':   {'ok': 0, 'warning': 0, 'critical': 0}
+            }
+        
+        files_to_analyze = [
+            item for item in tree.tree
+            if item.type == 'blob' and self._has_extension(item.path, extensions)
+        ][:50]
+ 
+        functions = []
+        summary   = {'ok': 0, 'warning': 0, 'critical': 0}
+ 
+        for file_item in files_to_analyze:
+            try:
+                content     = repo.get_contents(file_item.path)
+                source_code = content.decoded_content.decode('utf-8', errors='ignore')
+            except Exception:
+                continue
+ 
+            file_functions = self._analyze_file(source_code, file_item.path)
+            functions.extend(file_functions)
+            for f in file_functions:
+                summary[f['status']] += 1
+ 
+        order = {'critical': 0, 'warning': 1, 'ok': 2}
+        functions.sort(key=lambda x: order[x['status']])
+ 
+        return {
+            'supported':      True,
+            'functions':      functions,
+            'summary':        summary,
+            'files_analyzed': len(files_to_analyze),
+        }
+
+    # Calcula un score del 0 al 100.
+    # Pesos:
+    #     Actividad          30 pts
+    #     Salud del repo     25 pts
+    #     Contributors       20 pts
+    #     Issues & PRs       15 pts
+    #     Calidad de código  10 pts
+
+    def calculate_score(self, activity, contributors, health, issues_prs, functions_summary):
+        score = 0
+        
+        days = activity.get('days_since_last_commit', 999)
+        if days < GOOD_LAST_COMMIT: score += 15
+        elif days < MID_LAST_COMMIT: score += 10
+        if days < BAD_LAST_COMMIT: score += 15
+
+        cpw = activity.get('commits_per_week_avg', 0)
+        if cpw >= 5:    score += 15
+        elif cpw >= 2: score += 10
+        elif cpw >= 0.5: score += 5
+
+        health_checks = {
+            'has_readme': 8, 'has_license': 6, 'has_gitignore': 4,
+            'has_contributing': 4, 'has_description': 2, 'has_topics': 1,
+        }
+        score += min(sum(pts for k, pts in health_checks.items() if health.get(k)), 25)
+
+
+        total = contributors.get('total', 0)
+        if total >= 10: score += 10
+        elif total >= 5: score += 7
+        elif total >= 2: score += 4
+        else: score += 1
+
+        issues_score = 0
+        avg_close = issues_prs.get('issues', {}).get('avg_close_days')
+        if avg_close is not None:
+            if avg_close <= 3: issues_score += 8
+            elif avg_close <= 7: issues_score += 5
+            elif avg_close <= 30: issues_score += 2
+ 
+        avg_merge = issues_prs.get('prs', {}).get('avg_merge_days')
+        if avg_merge is not None:
+            if avg_merge <= 3: issues_score += 7
+            elif avg_merge <= 7: issues_score += 4
+            elif avg_merge <= 14: issues_score += 2
+ 
+        score += min(issues_score, 15)
+    
+        total_funcs = sum(functions_summary.values())
+        if total_funcs > 0:
+            ok_pct = functions_summary.get('ok', 0) / total_funcs
+            if ok_pct >= 0.9:   score += 10
+            elif ok_pct >= 0.7: score += 6
+            elif ok_pct >= 0.5: score += 3
+ 
+        return min(score, 100)
+ 
+    def get_score_label(self, score):
+        if score >= 85: return 'Excelente'
+        if score >= 70: return 'Bueno'
+        if score >= 50: return 'Regular'
+        if score >= 30: return 'Necesita mejoras'
+        return 'Crítico'
+ 
+    
+    
+    def _analyze_file(self, source_code, filepath):
+        if filepath.endswith('.py'):
+            return self._analyze_python(source_code, filepath)
+        elif filepath.endswith(('.js', '.jsx', '.ts', '.tsx')):
+            return self._analyze_js(source_code, filepath)
+        return []
+ 
+    def _analyze_python(self, source_code, filepath):
+        functions = []
+        try:
+            visitor = ComplexityVisitor.from_code(source_code)
+            blocks  = visitor.functions + visitor.classes
+ 
+            for block in blocks:
+                if hasattr(block, 'methods'):
+                    for method in block.methods:
+                        length = method.endline - method.lineno + 1
+                        functions.append(self._build_function_entry(
+                            name=f'{block.name}.{method.name}',
+                            filepath=filepath,
+                            line=method.lineno,
+                            length=length,
+                        ))
+                else:
+                    length = block.endline - block.lineno + 1
+                    functions.append(self._build_function_entry(
+                        name=block.name,
+                        filepath=filepath,
+                        line=block.lineno,
+                        length=length,
+                    ))
+        except Exception:
+            pass
+        return functions
+ 
+    def _analyze_js(self, source_code, filepath):
+        """Análisis de funciones JS/TS contando balance de llaves"""
+        functions = []
+        lines     = source_code.split('\n')
+ 
+        func_pattern = re.compile(
+            r'(function\s+(\w+)\s*\(|const\s+(\w+)\s*=\s*(?:async\s*)?\(.*\)\s*=>|(\w+)\s*:\s*function\s*\()'
+        )
+ 
+        i = 0
+        while i < len(lines):
+            match = func_pattern.search(lines[i])
+            if match:
+                func_name  = match.group(2) or match.group(3) or match.group(4) or 'anonymous'
+                start_line = i + 1
+                brace_count = 0
+                end_line    = start_line
+ 
+                for j in range(i, min(i + 200, len(lines))):
+                    brace_count += lines[j].count('{') - lines[j].count('}')
+                    if j > i and brace_count <= 0:
+                        end_line = j + 1
+                        break
+ 
+                functions.append(self._build_function_entry(
+                    name=func_name,
+                    filepath=filepath,
+                    line=start_line,
+                    length=end_line - start_line + 1,
+                ))
+                i = end_line
+            else:
+                i += 1
+ 
+        return functions
+ 
+    def _build_function_entry(self, name, filepath, line, length):
+        if length <= FUNCTION_LENGTH['ok']:       status = 'ok'
+        elif length <= FUNCTION_LENGTH['warning']: status = 'warning'
+        else:                                      status = 'critical'
+        return {'name': name, 'file': filepath, 'line': line, 'length': length, 'status': status}
+ 
+    def _get_extensions(self, languages):
+        extensions = []
+        for lang in languages:
+            extensions.extend(LANGUAGE_EXTENSIONS.get(lang, []))
+        return extensions
+ 
+    def _has_extension(self, path, extensions):
+        return any(path.endswith(ext) for ext in extensions)
+ 
