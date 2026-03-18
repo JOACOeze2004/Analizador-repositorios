@@ -12,7 +12,7 @@ analyzer_service = AnalyzerService()
 
 @analyzer_bp.route('/analyze', methods=['POST'])
 def analyze():
-    data     = request.get_json()
+    data = request.get_json()
     repo_url = data.get('repo_url', '').strip() if data else ''
  
     if not repo_url:
@@ -33,41 +33,41 @@ def analyze():
         return jsonify({'error': str(e)}), 502
     
     try:
-        basic_info   = github_service.get_basic_info(repo)
-        languages    = github_service.get_languages(repo)
-        activity     = github_service.get_commit_activity(repo)
+        basic_info = github_service.get_basic_info(repo)
+        languages = github_service.get_languages(repo)
+        activity = github_service.get_commit_activity(repo)
         contributors = github_service.get_contributors(repo)
-        issues_prs   = github_service.get_issues_and_prs(repo)
-        health       = github_service.get_health_checklist(repo)
-        functions    = analyzer_service.analyze_functions(repo, languages)
+        issues_prs = github_service.get_issues_and_prs(repo)
+        health = github_service.get_health_checklist(repo)
+        functions = analyzer_service.analyze_functions(repo, languages)
     except Exception as e:
         return jsonify({'error': f'Error al analizar el repositorio: {str(e)}'}), 500
  
     score = analyzer_service.calculate_score(
-        activity=activity,
-        contributors=contributors,
-        health=health,
-        issues_prs=issues_prs,
-        functions_summary=functions.get('summary', {}),
+        activity = activity,
+        contributors = contributors,
+        health = health,
+        issues_prs = issues_prs,
+        functions_summary = functions.get('summary', {}),
     )
  
     metrics = {
-        'basic_info':   basic_info,
-        'languages':    languages,
-        'activity':     activity,
+        'basic_info': basic_info,
+        'languages': languages,
+        'activity': activity,
         'contributors': contributors,
-        'issues_prs':   issues_prs,
-        'health':       health,
-        'functions':    functions,
-        'score_label':  analyzer_service.get_score_label(score),
+        'issues_prs': issues_prs,
+        'health': health,
+        'functions': functions,
+        'score_label': analyzer_service.get_score_label(score),
     }
  
     analysis = Analysis(
-        repo_url       = repo_url,
-        repo_name      = basic_info['name'],
-        repo_owner     = basic_info['owner'],
+        repo_url = repo_url,
+        repo_name = basic_info['name'],
+        repo_owner = basic_info['owner'],
         repo_full_name = basic_info['full_name'],
-        score          = score,
+        score = score,
     )
     analysis.set_metrics(metrics)
     db.session.add(analysis)
