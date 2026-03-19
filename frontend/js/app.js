@@ -19,7 +19,6 @@ function destroyCharts() {
     charts = {}
 }
 
-
 function chartDefaults() {
     return {
         responsive: true,
@@ -157,24 +156,6 @@ function renderDashboard(analysis) {
     },
     options: chartDefaults()
     })
-
-    charts.issues = new Chart(document.getElementById('chartIssues'), {
-    type: 'bar',
-    data: {
-      labels: ['Issues abiertas', 'Issues cerradas', 'PRs abiertas', 'PRs cerradas'],
-      datasets: [{
-        data: [
-          m.issues_prs.issues.open,
-          m.issues_prs.issues.closed_sample,
-          m.issues_prs.prs.open,
-          m.issues_prs.prs.closed_sample,
-        ],
-        backgroundColor: ['#f76f6f99','#e8e8f099','#f7c94899','#4ecca399'],
-        borderRadius: 4
-      }]
-    },
-    options: chartDefaults()
-  })
  
   document.getElementById('issueTime').textContent = m.issues_prs.issues.avg_close_days ?? 'N/A'
   document.getElementById('prTime').textContent    = m.issues_prs.prs.avg_merge_days    ?? 'N/A'
