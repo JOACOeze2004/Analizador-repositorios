@@ -242,7 +242,6 @@ class AnalyzerService:
         parts = path.split('/')
         if any(part in IGNORED_PATHS for part in parts):
             return True
-        # Archivos de librerías conocidas por nombre
         filename = parts[-1].lower()
         if any(pattern in filename for pattern in IGNORED_FILENAME_PATTERNS):
             return True

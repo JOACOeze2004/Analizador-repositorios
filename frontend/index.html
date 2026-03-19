@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Analizador de repositorios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="styles.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <head>
+        <h1>{ Analizador de repositorios }</h1>
+        <span>— analizá cualquier repositorio de GitHub</span>
+    </head>    
+
+
+    <div class="hero">
+        <h2>Analizá un <span>repositorio</span></h2>
+        <p>Métricas detalladas de actividad, código, contributors y mas.</p>
+        <div class="input-row">
+            <input type="text" id="repoInput" placeholder="https://github.com/usuario/nombreRepositorio" />
+            <button class="btn" id="analyzeBtn" onclick="analyzeRepo()">Analizar</button>
+        </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+    
+    <div class="spinner-wrap" id="spinnerWrap">
+        <div class="spinner"></div>
+        <p>Analizando repositorio...</p>
+    </div>
+
+    <div id="dashboard">
+        <div class="repo-header">
+            <div>
+                <h2><a id="repoLink" href="#" target="_blank"><span id="repoTitle"></span></a></h2>
+                <div class="repo-meta" id="repoMeta"></div>
+            </div>
+
+            <div class="score-big">
+                <div class="number" id="scoreNumber"></div>
+                <div class="label"  id="scoreLabel"></div>
+            </div>
+        </div>
+        
+        <div class="stats-row">
+            <div class="stat-card"><div class="val" id="statCommits">—</div><div class="lbl">Commits totales</div></div>
+            <div class="stat-card"><div class="val" id="statContribs">—</div><div class="lbl">Contributors</div></div>
+            <div class="stat-card"><div class="val" id="statStars">—</div><div class="lbl">Stars</div></div>
+            <div class="stat-card"><div class="val" id="statCpw">—</div><div class="lbl">Commits / semana</div></div>
+            <div class="stat-card"><div class="val" id="statBus">—</div><div class="lbl">Bus factor</div></div>
+        </div>
+
+        <div class="grid">
+            <div class="card"><h4>Actividad — commits por mes</h4><canvas id="chartCommits"></canvas></div>
+            <div class="card"><h4>Lenguajes</h4><canvas id="chartLangs"></canvas></div>
+        </div>
+
+        <div class="grid">
+            <div class="card"><h4>Commits por día de la semana</h4><canvas id="chartWeekday"></canvas></div>
+            <div class="card"><h4>Contributors — top 10</h4><canvas id="chartContribs"></canvas></div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h4>Salud del repositorio</h4>
+                <div class="checklist" id="healthList"></div>
+            </div>
+
+            <div class="card">
+                <h4>Issues & Pull Requests</h4>
+                <canvas id="chartIssues"></canvas>
+                <div class="issues-times">
+                    <span>⏱ Issues: <strong id="issueTime">—</strong> días prom.</span>
+                    <span>⏱ PRs: <strong id="prTime">—</strong> días prom.</span>
+                </div>
+            </div>
+
+            <div class="card" id="functionsCard">
+                <h4>Calidad de código — longitud de funciones</h4>
+            <div class="func-summary">
+                <div class="func-stat ok"><div class="num" id="funcOk">—</div>  <div class="lbl">✅ OK (≤20)</div></div>
+                <div class="func-stat warning"> <div class="num" id="funcWarn">—</div> <div class="lbl">⚠️ Borderline</div></div>
+                <div class="func-stat critical"><div class="num" id="funcCrit">—</div> <div class="lbl">🔴 Modularizar</div></div>
+            </div>
+            <div class="func-list" id="funcList"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
