@@ -12,7 +12,10 @@ def create_app():
     app.config.from_object(Config)
  
     db.init_app(app)
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:8080",
+    "https://analizador-repositorios-production.up.railway.app"
+    ]}})
 
     from app.routes.analyzer import analyzer_bp
     app.register_blueprint(analyzer_bp)
