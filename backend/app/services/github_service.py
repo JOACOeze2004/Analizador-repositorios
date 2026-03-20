@@ -142,8 +142,8 @@ class GithubService:
         }
  
     def get_issues_and_prs(self, repo):
-        closed_issues = list(repo.get_issues(state='closed')[:100])
-        open_issues   = list(repo.get_issues(state='open'))
+        closed_issues = list(repo.get_issues(state='closed').get_page(0))
+        open_issues   = list(repo.get_issues(state='open').get_page(0))
         close_times = []
         for issue in closed_issues:
             if issue.pull_request:
@@ -154,9 +154,9 @@ class GithubService:
  
         avg_close_days = round(sum(close_times) / len(close_times), 1) if close_times else None
  
-        closed_prs = list(repo.get_pulls(state='closed')[:100])
-        open_prs   = list(repo.get_pulls(state='open'))
- 
+        closed_prs = list(repo.get_pulls(state='closed').get_page(0))
+        open_prs   = list(repo.get_pulls(state='open').get_page(0))
+        
         merge_times = []
         for pr in closed_prs:
             if pr.merged_at and pr.created_at:
