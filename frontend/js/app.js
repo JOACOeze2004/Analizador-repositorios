@@ -1,4 +1,4 @@
-const API = 'http://localhost:5000'
+const API = 'https://analizador-repositorios-production.up.railway.app'
 let charts = {}
 
 function scoreColor(score) {
