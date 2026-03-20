@@ -1,4 +1,4 @@
-const API = 'https://analizador-repositorios-production.up.railway.app'
+const API = 'https://analizador-repositorios-production-57ab.up.railway.app'
 let charts = {}
 
 function scoreColor(score) {
