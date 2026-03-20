@@ -12,7 +12,7 @@ def create_app():
     app.config.from_object(Config)
  
     db.init_app(app)
-    CORS(app)
+    CORS(app, origins="*")
 
     from app.routes.analyzer import analyzer_bp
     app.register_blueprint(analyzer_bp)
