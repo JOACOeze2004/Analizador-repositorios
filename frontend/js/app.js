@@ -106,6 +106,20 @@ function renderDashboard(analysis) {
     options: chartDefaults()
     })
 
+    const cpw_data = m.activity.commits_per_week
+    charts.weeks = new Chart(document.getElementById('chartWeeks'), {
+        type: 'bar',
+        data: {
+            labels:   Object.keys(cpw_data),
+            datasets: [{ 
+                data: Object.values(cpw_data), 
+                backgroundColor: ACCENT + '99', 
+                borderRadius: 4 
+            }]
+        },
+        options: chartDefaults()
+    })
+
     const langs = m.languages
     charts.langs = new Chart(document.getElementById('chartLangs'), {
         type: 'doughnut',
