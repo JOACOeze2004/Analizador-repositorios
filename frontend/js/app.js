@@ -120,6 +120,20 @@ function renderDashboard(analysis) {
         options: chartDefaults()
     })
 
+    const hours = m.activity.commits_by_hour
+    charts.hours = new Chart(document.getElementById('chartHours'), {
+        type: 'bar',
+        data: {
+            labels:   Object.keys(hours).map(h => `${h}hs`),
+            datasets: [{
+                data: Object.values(hours),
+                backgroundColor: ACCENT2 + '99',
+                borderRadius: 4
+            }]
+        },
+        options: chartDefaults()
+    })
+
     const langs = m.languages
     charts.langs = new Chart(document.getElementById('chartLangs'), {
         type: 'doughnut',
