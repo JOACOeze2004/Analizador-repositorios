@@ -2,6 +2,8 @@ from radon.visitors import ComplexityVisitor
 from github import GithubException
 from flask import Blueprint, request, jsonify, make_response
 import re
+import lizard
+from github import GithubException
  
 IGNORED_PATHS = {
     'node_modules', 'vendor', 'dist', 'build', 'venv', '.venv'
@@ -11,12 +13,18 @@ IGNORED_FILENAME_PATTERNS = [
     'bootstrap', 'jquery', 'popper', 'fontawesome', 'lodash', 'moment'
 ]
 
-SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript'}
+SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Rust', 'Go', }
 
 LANGUAGE_EXTENSIONS = {
     'Python':     ['.py'],
     'JavaScript': ['.js', '.jsx'],
     'TypeScript': ['.ts', '.tsx'],
+    'Java' : ['.java'],
+    'C' : ['.c', '.h'],
+    'C++' : ['.cpp', '.cc','.cxx'],
+    'C#' : ['.cs'],
+    'Rust' : ['.rs'],
+    'Go' : ['.go'],
 }
 
 FUNCTION_LENGTH = {
@@ -29,6 +37,11 @@ class AnalyzerService:
     def analyze_functions(self, repo, languages):
         repo_languages = set(languages.keys())
         langs_to_analyze = repo_languages & SUPPORTED_LANGUAGES
+        print(f'Lenguajes del repo: {repo_languages}')
+        print(f'SUPPORTED_LANGUAGES: {SUPPORTED_LANGUAGES}')
+        print(f'Lenguajes a analizar: {langs_to_analyze}')
+        extensions = self._get_extensions(langs_to_analyze)
+        print(f'Extensiones: {extensions}')
  
         if not langs_to_analyze:
             return {
@@ -147,76 +160,15 @@ class AnalyzerService:
         if score >= 30: return 'Necesita mejoras'
         return 'Crítico'
  
-    
     def _analyze_file(self, source_code, filepath):
-        if filepath.endswith('.py'):
-            return self._analyze_python(source_code, filepath)
-        elif filepath.endswith(('.js', '.jsx', '.ts', '.tsx')):
-            return self._analyze_js(source_code, filepath)
-        return []
- 
-    def _analyze_python(self, source_code, filepath):
         functions = []
         try:
-            visitor = ComplexityVisitor.from_code(source_code)
-            blocks  = visitor.functions + visitor.classes
- 
-            for block in blocks:
-                if hasattr(block, 'methods'):
-                    for method in block.methods:
-                        length = method.endline - method.lineno + 1
-                        functions.append(self._build_function_entry(
-                            name=f'{block.name}.{method.name}',
-                            filepath=filepath,
-                            line=method.lineno,
-                            length=length,
-                        ))
-                else:
-                    length = block.endline - block.lineno + 1
-                    functions.append(self._build_function_entry(
-                        name=block.name,
-                        filepath=filepath,
-                        line=block.lineno,
-                        length=length,
-                    ))
+            analysis = lizard.analyze_file.analyze_source_code(filepath, source_code)
+            for func in analysis.function_list:
+                functions.append(self._build_function_entry( name=func.name, filepath=filepath, line=func.start_line, length=func.length, ))
         except Exception:
             pass
-        return functions
- 
-    def _analyze_js(self, source_code, filepath):
-        functions = []
-        lines = source_code.split('\n')
- 
-        func_pattern = re.compile(
-            r'(function\s+(\w+)\s*\(|const\s+(\w+)\s*=\s*(?:async\s*)?\(.*\)\s*=>|(\w+)\s*:\s*function\s*\()'
-        )
- 
-        i = 0
-        while i < len(lines):
-            match = func_pattern.search(lines[i])
-            if match:
-                func_name  = match.group(2) or match.group(3) or match.group(4) or 'anonymous'
-                start_line = i + 1
-                brace_count = 0
-                end_line    = start_line
- 
-                for j in range(i, min(i + 200, len(lines))):
-                    brace_count += lines[j].count('{') - lines[j].count('}')
-                    if j > i and brace_count <= 0:
-                        end_line = j + 1
-                        break
- 
-                functions.append(self._build_function_entry(
-                    name=func_name,
-                    filepath=filepath,
-                    line=start_line,
-                    length=end_line - start_line + 1,
-                ))
-                i = end_line
-            else:
-                i += 1
- 
-        return functions
+        return functions        
  
     def _build_function_entry(self, name, filepath, line, length):
         if length <= FUNCTION_LENGTH['ok']:       status = 'ok'
