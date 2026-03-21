@@ -1,6 +1,7 @@
 from github import Github, GithubException
 from datetime import datetime, timezone
 from collections import defaultdict
+from datetime import timedelta
 
 class GithubService:
 
@@ -75,7 +76,8 @@ class GithubService:
             commits_per_month[month_key] += 1
             commits_by_weekday[weekday_names[date.weekday()]] += 1
             commits_by_hour[date.hour] += 1
-            week_key = date.strftime('%Y-W%W')
+            monday = date - timedelta(days=date.weekday())
+            week_key = monday.strftime('%d/%m/%y')  
             commits_per_week[week_key] += 1
  
         dates = [c.commit.author.date for c in commits]
