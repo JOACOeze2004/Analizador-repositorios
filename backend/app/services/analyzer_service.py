@@ -13,7 +13,7 @@ IGNORED_FILENAME_PATTERNS = [
     'bootstrap', 'jquery', 'popper', 'fontawesome', 'lodash', 'moment'
 ]
 
-SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Rust', 'Go', }
+SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Rust', 'Go','Ruby','Swift','Kotlin' }
 
 LANGUAGE_EXTENSIONS = {
     'Python':     ['.py'],
@@ -25,6 +25,9 @@ LANGUAGE_EXTENSIONS = {
     'C#' : ['.cs'],
     'Rust' : ['.rs'],
     'Go' : ['.go'],
+    'Ruby':       ['.rb'],
+    'Swift':      ['.swift'],
+    'Kotlin':     ['.kt'],
 }
 
 FUNCTION_LENGTH = {
