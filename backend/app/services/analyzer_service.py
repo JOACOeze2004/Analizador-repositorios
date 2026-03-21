@@ -12,9 +12,6 @@ IGNORED_FILENAME_PATTERNS = [
 ]
 
 SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript'}
-GOOD_LAST_COMMIT = 30
-MID_LAST_COMMIT = 90
-BAD_LAST_COMMIT = 180
 
 LANGUAGE_EXTENSIONS = {
     'Python':     ['.py'],
@@ -85,32 +82,21 @@ class AnalyzerService:
             'files_analyzed': len(files_to_analyze),
         }
 
-    # Calcula un score del 0 al 100.
-    # Pesos:
-    #     Actividad          30 pts
-    #     Salud del repo     25 pts
-    #     Contributors       20 pts
-    #     Issues & PRs       15 pts
-    #     Calidad de código  10 pts
+    # Calcula un score del 0 al 100 
+        # Pesos:
+        #     Salud/estructura   35 pts
+        #     Calidad de código  25 pts
+        #     Colaboración       20 pts
+        #     Issues & PRs       20 pts
 
     def calculate_score(self, activity, contributors, health, issues_prs, functions_summary):
         score = 0
         
-        days = activity.get('days_since_last_commit', 999)
-        if days < GOOD_LAST_COMMIT: score += 15
-        elif days < MID_LAST_COMMIT: score += 10
-        if days < BAD_LAST_COMMIT: score += 15
-
-        cpw = activity.get('commits_per_week_avg', 0)
-        if cpw >= 5:    score += 15
-        elif cpw >= 2: score += 10
-        elif cpw >= 0.5: score += 5
-
         health_checks = {
-            'has_readme': 8, 'has_license': 6, 'has_gitignore': 4,
-            'has_contributing': 4, 'has_description': 2, 'has_topics': 1,
+            'has_readme': 10, 'has_license': 8, 'has_gitignore': 6,
+            'has_contributing': 5, 'has_changelog': 3, 'has_description': 2, 'has_topics': 1,
         }
-        score += min(sum(pts for k, pts in health_checks.items() if health.get(k)), 25)
+        score += min(sum(pts for k, pts in health_checks.items() if health.get(k)), 35)
 
 
         total = contributors.get('total', 0)
@@ -119,28 +105,39 @@ class AnalyzerService:
         elif total >= 2: score += 4
         else: score += 1
 
+        bf = contributors.get('bus_factor', 1)
+        if bf >= 4:   score += 10
+        elif bf >= 2: score += 6
+        else:         score += 2
+
         issues_score = 0
         avg_close = issues_prs.get('issues', {}).get('avg_close_days')
         if avg_close is not None:
-            if avg_close <= 3: issues_score += 8
-            elif avg_close <= 7: issues_score += 5
-            elif avg_close <= 30: issues_score += 2
+            if avg_close <= 3: issues_score += 10
+            elif avg_close <= 7: issues_score += 7
+            elif avg_close <= 30: issues_score += 3
  
         avg_merge = issues_prs.get('prs', {}).get('avg_merge_days')
         if avg_merge is not None:
-            if avg_merge <= 3: issues_score += 7
-            elif avg_merge <= 7: issues_score += 4
-            elif avg_merge <= 14: issues_score += 2
+            if avg_merge <= 3: issues_score += 10
+            elif avg_merge <= 7: issues_score += 7
+            elif avg_merge <= 14: issues_score += 3
  
-        score += min(issues_score, 15)
+        if avg_close is None and avg_merge is None:
+            issues_score = 10
+        
+        score += min(issues_score, 20)
     
         total_funcs = sum(functions_summary.values())
         if total_funcs > 0:
             ok_pct = functions_summary.get('ok', 0) / total_funcs
-            if ok_pct >= 0.9:   score += 10
-            elif ok_pct >= 0.7: score += 6
-            elif ok_pct >= 0.5: score += 3
- 
+            if ok_pct >= 0.9:   score += 25
+            elif ok_pct >= 0.7: score += 18
+            elif ok_pct >= 0.5: score += 10
+            elif ok_pct > 0: score += 5
+        else:
+            score += 12
+
         return min(score, 100)
  
     def get_score_label(self, score):
@@ -150,7 +147,6 @@ class AnalyzerService:
         if score >= 30: return 'Necesita mejoras'
         return 'Crítico'
  
-    
     
     def _analyze_file(self, source_code, filepath):
         if filepath.endswith('.py'):
