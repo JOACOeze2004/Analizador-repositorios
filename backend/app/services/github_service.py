@@ -64,6 +64,8 @@ class GithubService:
         commits_per_month = defaultdict(int)
         commits_by_weekday = defaultdict(int)
         commits_by_hour = defaultdict(int)
+        commits_per_week = defaultdict(int)
+
  
         weekday_names = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
  
@@ -73,6 +75,8 @@ class GithubService:
             commits_per_month[month_key] += 1
             commits_by_weekday[weekday_names[date.weekday()]] += 1
             commits_by_hour[date.hour] += 1
+            week_key = date.strftime('%Y-W%W')
+            commits_per_week[week_key] += 1
  
         dates = [c.commit.author.date for c in commits]
         last_commit = max(dates)
@@ -96,6 +100,7 @@ class GithubService:
             'is_active':            is_active,
             'days_since_last_commit': days_since_last,
             'commits_per_week_avg': commits_per_week_avg,
+            'commits_per_week': dict(sorted(commits_per_week.items())),
         }
     
     def get_contributors(self, repo):
