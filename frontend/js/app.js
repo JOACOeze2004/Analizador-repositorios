@@ -1,5 +1,5 @@
-const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
-//const API = 'http://localhost:5000'
+//const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+const API = 'http://localhost:5000'
 
 let charts = {}
 
@@ -132,7 +132,6 @@ function renderDashboard(analysis) {
     document.getElementById('statCommits').textContent = m.activity.total_commits
     document.getElementById('statContribs').textContent = m.contributors.total
     document.getElementById('statCpw').textContent = m.activity.commits_per_week_avg
-    document.getElementById('statBus').textContent = m.contributors.bus_factor
  
     const ACCENT  = '#e8e8f0'
     const ACCENT2 = '#f76f6f'
