@@ -91,6 +91,18 @@ class GithubService:
  
         total_weeks = max((now - first_commit.replace(tzinfo=timezone.utc)).days / 7, 1)
         commits_per_week_avg = round(len(commits) / total_weeks, 1)
+
+        first = first_commit.replace(zinfo=timezone.utc)
+        last = last_commit
+        delta = last - first
+        total_days = delta.days
+        years = total_days // 365
+        months = (total_days % 365) // 30
+
+        if years > 0:
+            activity_time = f'{years}a {months}m'
+        else:
+            activity_time = f'{months} meses'
  
         return {
             'total_commits':        len(commits),
@@ -99,6 +111,7 @@ class GithubService:
             'commits_by_hour':      {str(h): commits_by_hour[h] for h in range(24)},
             'first_commit':         first_commit.isoformat(),
             'last_commit':          last_commit.isoformat(),
+            'activity_time':        activity_time,
             'is_active':            is_active,
             'days_since_last_commit': days_since_last,
             'commits_per_week_avg': commits_per_week_avg,
