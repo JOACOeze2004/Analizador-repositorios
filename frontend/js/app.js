@@ -43,10 +43,10 @@ async function analyzeRepo() {
         return
     }
  
-    document.getElementById('errorBox').style.display    = 'none'
-    document.getElementById('dashboard').style.display   = 'none'
+    document.getElementById('errorBox').style.display = 'none'
+    document.getElementById('dashboard').style.display = 'none'
     document.getElementById('spinnerWrap').style.display = 'block'
-    document.getElementById('analyzeBtn').disabled       = true
+    document.getElementById('analyzeBtn').disabled = true
     destroyCharts()
  
     try {
@@ -74,11 +74,11 @@ function renderDashboard(analysis) {
     const m = analysis.metrics
     const score = analysis.score
  
-    document.getElementById('repoTitle').textContent    = analysis.repo_full_name
-    document.getElementById('repoLink').href            = m.basic_info.url
-    document.getElementById('scoreNumber').textContent  = `${score}/100`
-    document.getElementById('scoreNumber').style.color  = scoreColor(score)
-    document.getElementById('scoreLabel').textContent   = m.score_label
+    document.getElementById('repoTitle').textContent = analysis.repo_full_name
+    document.getElementById('repoLink').href = m.basic_info.url
+    document.getElementById('scoreNumber').textContent = `${score}/100`
+    document.getElementById('scoreNumber').style.color = scoreColor(score)
+    document.getElementById('scoreLabel').textContent = m.score_label
     
     const meta     = document.getElementById('repoMeta')
     meta.innerHTML = ''
@@ -262,8 +262,11 @@ function renderDashboard(analysis) {
     }
     document.getElementById('dashboard').style.display = 'block'
     document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' })
+
 }
  
 document.getElementById('repoInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') analyzeRepo()
 })
+
+fetch(`${API}/health`).catch(() => {})
