@@ -1,5 +1,5 @@
-//const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
-const API = 'http://localhost:5000'
+const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+//const API = 'http://localhost:5000'
 
 let charts = {}
 
