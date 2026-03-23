@@ -51,7 +51,6 @@ async function fetchWithRetry(url, options, retries = 2) {
 }
 
 async function analyzeRepo() {
-    console.log('analyzeRepo llamado, url:', document.getElementById('repoInput').value)
     const url = document.getElementById('repoInput').value.trim()
     if (!url){
         return
@@ -138,11 +137,9 @@ function renderDashboard(analysis) {
     const ACCENT  = '#e8e8f0'
     const ACCENT2 = '#f76f6f'
 
-    document.getElementById('statLastCommit').textContent = 
-    new Date(m.activity.last_commit).toLocaleDateString('es-AR')
+    document.getElementById('statLastCommit').textContent = new Date(m.activity.last_commit).toLocaleDateString('es-AR')
 
-    document.getElementById('statActivityTime').textContent = 
-    m.activity.activity_time
+    document.getElementById('statActivityTime').textContent = m.activity.activity_time
 
     const cpm = m.activity.commits_per_month
     charts.commits = new Chart(document.getElementById('chartCommits'), {

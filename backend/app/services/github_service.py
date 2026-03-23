@@ -92,8 +92,8 @@ class GithubService:
         total_weeks = max((now - first_commit.replace(tzinfo=timezone.utc)).days / 7, 1)
         commits_per_week_avg = round(len(commits) / total_weeks, 1)
 
-        first = first_commit.replace(zinfo=timezone.utc)
-        last = last_commit
+        first = first_commit.replace(tzinfo=timezone.utc) if first_commit.tzinfo is None else first_commit
+        last = last_commit_aware
         delta = last - first
         total_days = delta.days
         years = total_days // 365
