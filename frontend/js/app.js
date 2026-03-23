@@ -1,4 +1,5 @@
-const API = 'http://localhost:5000'    // http://localhost:5000 para debugear en local
+const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+//const API = 'http://localhost:5000'
 let charts = {}
 
 function scoreColor(score) {
@@ -86,10 +87,10 @@ function renderDashboard(analysis) {
     if (m.basic_info.license) meta.innerHTML += `<span class="tag">📄 ${m.basic_info.license}</span>`
     meta.innerHTML += `<span class="tag">🍴 ${m.basic_info.forks} forks</span>`
     meta.innerHTML += `<span class="tag">👁 ${m.basic_info.watchers} watchers</span>`
+    meta.innerHTML += `<span class="tag">⭐ ${m.basic_info.stars} stars</span>`
     
     document.getElementById('statCommits').textContent = m.activity.total_commits
     document.getElementById('statContribs').textContent = m.contributors.total
-    document.getElementById('statStars').textContent = m.basic_info.stars
     document.getElementById('statCpw').textContent = m.activity.commits_per_week_avg
     document.getElementById('statBus').textContent = m.contributors.bus_factor
  
@@ -170,23 +171,27 @@ function renderDashboard(analysis) {
     charts.issues = new Chart(document.getElementById('chartIssues'), {
     type: 'bar',
     data: {
-      labels: ['Issues abiertas', 'Issues cerradas', 'PRs abiertas', 'PRs cerradas'],
-      datasets: [{
-        data: [
-          m.issues_prs.issues.open,
-          m.issues_prs.issues.closed_sample,
-          m.issues_prs.prs.open,
-          m.issues_prs.prs.closed_sample,
-        ],
-        backgroundColor: ['#f76f6f99','#e8e8f099','#f7c94899','#4ecca399'],
-        borderRadius: 4
-      }]
+        labels: ['Issues abiertas', 'Issues cerradas', 'PRs abiertas', 'PRs cerradas'],
+        datasets: [{
+            data: [
+            m.issues_prs.issues.open,
+            m.issues_prs.issues.closed_sample,
+            m.issues_prs.prs.open,
+            m.issues_prs.prs.closed_sample,
+            ],
+            backgroundColor: ['#f76f6f99','#e8e8f099','#f7c94899','#4ecca399'],
+            borderRadius: 4
+        }]
     },
     options: chartDefaults()
     })
  
-  document.getElementById('issueTime').textContent = m.issues_prs.issues.avg_close_days ?? 'N/A'
-  document.getElementById('prTime').textContent    = m.issues_prs.prs.avg_merge_days    ?? 'N/A'
+    document.getElementById('issueTime').textContent = m.issues_prs.issues.avg_close_days ?? 'N/A'
+    document.getElementById('prTime').textContent = m.issues_prs.prs.avg_merge_days ?? 'N/A'
+
+    document.getElementById('statSize').textContent =  m.basic_info.size_kb > 1024 ? `${(m.basic_info.size_kb / 1024).toFixed(1)} MB` : `${m.basic_info.size_kb} KB`
+
+    document.getElementById('statFirstCommit').textContent = new Date(m.activity.first_commit).toLocaleDateString('es-AR')
  
     const health = m.health
     const checks = {
