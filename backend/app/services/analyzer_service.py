@@ -40,11 +40,6 @@ class AnalyzerService:
     def analyze_functions(self, repo, languages):
         repo_languages = set(languages.keys())
         langs_to_analyze = repo_languages & SUPPORTED_LANGUAGES
-        print(f'Lenguajes del repo: {repo_languages}')
-        print(f'SUPPORTED_LANGUAGES: {SUPPORTED_LANGUAGES}')
-        print(f'Lenguajes a analizar: {langs_to_analyze}')
-        extensions = self._get_extensions(langs_to_analyze)
-        print(f'Extensiones: {extensions}')
  
         if not langs_to_analyze:
             return {

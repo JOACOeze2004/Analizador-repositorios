@@ -253,3 +253,19 @@ header span { color: var(--muted); font-size: 0.85rem; }
   color: var(--muted);
 }
 .issues-times strong { color: var(--text); }
+
+.btn-toggle-funcs {
+  margin-top: 0.75rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-toggle-funcs:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}

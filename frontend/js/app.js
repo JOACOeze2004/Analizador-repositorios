@@ -1,4 +1,4 @@
-const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+const API = 'http://localhost:5000'    // http://localhost:5000 para debugear en local
 let charts = {}
 
 function scoreColor(score) {
@@ -217,18 +217,39 @@ function renderDashboard(analysis) {
         document.getElementById('funcWarn').textContent = funcs.summary.warning
         document.getElementById('funcCrit').textContent = funcs.summary.critical
  
-        const fList     = document.getElementById('funcList')
+        const fList = document.getElementById('funcList')
         fList.innerHTML = ''
-        funcs.functions.forEach(f => {
-        fList.innerHTML += `
-            <div class="func-item">
-            <div>
-                <div class="fname">${f.name}</div>
-                <div class="ffile">${f.file} · línea ${f.line}</div>
-            </div>
-            <span class="func-badge ${f.status}">${f.length} líneas</span>
-            </div>`
-        })
+        const critical_funcs = funcs.functions.filter(f => f.status !== 'ok')
+        const all_funcs = funcs.functions
+        let show_all = false
+
+        function render_functions(functions) {
+            fList.innerHTML = ''
+            functions.forEach(f => {
+            fList.innerHTML += `
+                <div class="func-item">
+                    <div>
+                        <div class="fname">${f.name}</div>
+                        <div class="ffile">${f.file} · línea ${f.line}</div>
+                    </div>
+                    <span class="func-badge ${f.status}">${f.length} líneas</span>
+                </div>`
+            })
+        }
+        render_functions(critical_funcs)
+
+        const btnToggle = document.createElement('button')
+        btnToggle.className = 'btn-toggle-funcs'
+        btnToggle.textContent = `Ver todas (${all_funcs.length})`
+        btnToggle.onclick = () => {
+            show_all = !show_all
+            render_functions(show_all ? all_funcs : critical_funcs)
+            btnToggle.textContent = show_all 
+                ? `Ver solo problemáticas (${critical_funcs.length})`
+                : `Ver todas (${all_funcs.length})`
+        }
+        fList.after(btnToggle)
+
     } else {
         document.getElementById('functionsCard').innerHTML = `
         <h4>Calidad de código</h4>
