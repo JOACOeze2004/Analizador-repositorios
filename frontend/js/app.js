@@ -1,5 +1,6 @@
-const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
-//const API = 'http://localhost:5000'
+//const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+const API = 'http://localhost:5000'
+
 let charts = {}
 
 function scoreColor(score) {
@@ -37,7 +38,20 @@ function showError(msg) {
     box.style.display = 'block'
 }
 
+async function fetchWithRetry(url, options, retries = 2) {
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const res = await fetch(url, options)
+            if (res.ok) return res
+        } catch(e) {
+            if (i === retries) throw e
+            await new Promise(r => setTimeout(r, 1500))
+        }
+    }
+}
+
 async function analyzeRepo() {
+    console.log('analyzeRepo llamado, url:', document.getElementById('repoInput').value)
     const url = document.getElementById('repoInput').value.trim()
     if (!url){
         return
@@ -48,23 +62,50 @@ async function analyzeRepo() {
     document.getElementById('spinnerWrap').style.display = 'block'
     document.getElementById('analyzeBtn').disabled = true
     destroyCharts()
+
+    const messages = [
+        'Conectando con GitHub...',
+        'Obteniendo información del repo...',
+        'Analizando commits...',
+        'Analizando contributors...',
+        'Calculando tamaño del repo...',
+        'Calculando Commits por mes...',
+        'Calculando Commits por semana...',
+        'Armando gráfico con lenguajes usados...',
+        'Calculando Commits por dia de la semana...',
+        'Calculando Commits por hora del dia...',
+        'Armando gráfico con contributors...',
+        'Calculando salud del repo...',
+        'Analizando issues y PRS...',
+        'Armando gráfico issues y PRS...',
+        'Analizando código...',
+        'Analizando longitud de funciones...'
+    ]
+
+    let msgIndex = 0
+    const msgInterval = setInterval(() => {
+        msgIndex = (msgIndex + 1) % messages.length
+        document.getElementById('spinnerMsg').textContent = messages[msgIndex]
+    }, 3000)
  
     try {
-        const res  = await fetch(`${API}/analyze`, {
+        const res  = await fetchWithRetry(`${API}/analyze`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ repo_url: url })
+            body: JSON.stringify({ repo_url: url })
         })
+        clearInterval(msgInterval)
         const data = await res.json()
         if (!res.ok) {
-        showError(data.error || 'Error desconocido')
-        return
+            showError(data.error || 'Error desconocido')
+            return
         }
         renderDashboard(data.analysis)
  
     } catch(e) {
         showError('No se pudo conectar con el servidor. ¿Está corriendo el backend?')
     } finally {
+        clearInterval(msgInterval)
         document.getElementById('spinnerWrap').style.display = 'none'
         document.getElementById('analyzeBtn').disabled       = false
     }
