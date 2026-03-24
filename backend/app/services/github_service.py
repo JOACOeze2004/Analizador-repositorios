@@ -48,7 +48,7 @@ class GithubService:
         }
     
     def get_commit_activity(self, repo):
-        commits = list(repo.get_commits())
+        commits = list(repo.get_commits()[:500])
  
         if not commits:
             return {

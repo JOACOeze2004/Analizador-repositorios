@@ -6,11 +6,15 @@ import lizard
 from github import GithubException
  
 IGNORED_PATHS = {
-    'node_modules', 'vendor', 'dist', 'build', 'venv', '.venv'
+    'node_modules', 'vendor', 'dist', 'build', 'venv', '.venv', 'tests','test','__tests__','spec','specs'
 }
 
 IGNORED_FILENAME_PATTERNS = [
     'bootstrap', 'jquery', 'popper', 'fontawesome', 'lodash', 'moment'
+]
+
+IGNORED_TEST_PATTERNS = [
+    'test_', '_test.', '.test.', '.spec.',
 ]
 
 SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Rust', 'Go','Ruby','Swift','Kotlin' }
@@ -66,7 +70,7 @@ class AnalyzerService:
             if item.type == 'blob' 
             and self._has_extension(item.path, extensions)
             and not self._is_ignored(item.path)
-        ][:50]
+        ][:30]
  
         functions = []
         summary   = {'ok': 0, 'warning': 0, 'critical': 0}
@@ -191,6 +195,8 @@ class AnalyzerService:
             return True
         filename = parts[-1].lower()
         if any(pattern in filename for pattern in IGNORED_FILENAME_PATTERNS):
+            return True
+        if any(filename.startswith(p) or (p in filename) for p in IGNORED_TEST_PATTERNS):
             return True
         return False
  
