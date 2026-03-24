@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from collections import defaultdict
 from datetime import timedelta
 
+MAX_COMMITS = 1000
+
 class GithubService:
 
     def __init__(self, token=None):
@@ -48,7 +50,7 @@ class GithubService:
         }
     
     def get_commit_activity(self, repo):
-        commits = list(repo.get_commits()[:500])
+        commits = list(repo.get_commits()[:MAX_COMMITS])
  
         if not commits:
             return {
