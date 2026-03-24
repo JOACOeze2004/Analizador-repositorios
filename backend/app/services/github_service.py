@@ -89,7 +89,7 @@ class GithubService:
         days_since_last = (now - last_commit_aware).days
         is_active = days_since_last < 90
  
-        total_weeks = max((now - first_commit.replace(tzinfo=timezone.utc)).days / 7, 1)
+        total_weeks = max((last_commit_aware - first_commit.replace(tzinfo=timezone.utc)).days / 7, 1)
         commits_per_week_avg = round(len(commits) / total_weeks, 1)
 
         first = first_commit.replace(tzinfo=timezone.utc) if first_commit.tzinfo is None else first_commit
