@@ -158,7 +158,7 @@ class GithubService:
         return {
             'total':      len(ranking),
             'bus_factor': bus_factor,
-            'ranking':    ranking[:20], 
+            'ranking':    ranking[:10], 
         }
  
     def get_issues_and_prs(self, repo):
