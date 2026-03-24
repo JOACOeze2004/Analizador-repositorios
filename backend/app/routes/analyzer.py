@@ -4,6 +4,7 @@ from app.models.analysis import Analysis
 from app.services.github_service import GithubService
 from app.services.analyzer_service import AnalyzerService
 from config import Config
+from concurrent.futures import ThreadPoolExecutor
 
 analyzer_bp = Blueprint('analyzer', __name__)
 
@@ -33,12 +34,20 @@ def analyze():
         return jsonify({'error': str(e)}), 502
     
     try:
-        basic_info = github_service.get_basic_info(repo)
-        languages = github_service.get_languages(repo)
-        activity = github_service.get_commit_activity(repo)
-        contributors = github_service.get_contributors(repo)
-        issues_prs = github_service.get_issues_and_prs(repo)
-        health = github_service.get_health_checklist(repo)
+        with ThreadPoolExecutor() as executor:
+            f_basic = executor.submit(github_service.get_basic_info, repo)
+            f_languajes = executor.submit(github_service.get_languages, repo)
+            f_activity = executor.submit(github_service.get_commit_activity, repo)
+            f_contributors = executor.submit(github_service.get_contributors, repo)
+            f_issues_prs = executor.submit(github_service.get_issues_and_prs, repo)
+            f_health = executor.submit(github_service.get_health_checklist, repo)
+
+        basic_info = f_basic.result()
+        languages = f_languajes.result()
+        activity = f_activity.result()
+        contributors = f_contributors.result()
+        issues_prs = f_issues_prs.result()
+        health = f_health.result()
         functions = analyzer_service.analyze_functions(repo, languages)
     except Exception as e:
         return jsonify({'error': f'Error al analizar el repositorio: {str(e)}'}), 500
