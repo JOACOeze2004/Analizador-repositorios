@@ -1,5 +1,5 @@
-const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
-//const API = 'http://localhost:5000'
+//const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+const API = 'http://localhost:5000'
 
 let charts = {}
 
@@ -235,6 +235,12 @@ function renderDashboard(analysis) {
     document.getElementById('statSize').textContent =  m.basic_info.size_kb > 1024 ? `${(m.basic_info.size_kb / 1024).toFixed(1)} MB` : `${m.basic_info.size_kb} KB`
 
     document.getElementById('statFirstCommit').textContent = new Date(m.activity.first_commit).toLocaleDateString('es-AR')
+
+    document.getElementById('statDaysSilent').textContent = m.activity.days_since_last_commit ?? '—'
+
+    const monthCount = Object.keys(m.activity.commits_per_month).length
+    const cpmAvg = monthCount > 0 ? (m.activity.total_commits / monthCount).toFixed(1) : '—'
+    document.getElementById('statCpm').textContent = cpmAvg
  
     const health = m.health
     const checks = {
