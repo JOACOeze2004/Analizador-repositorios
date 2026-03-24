@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify, make_response
 import re
 import lizard
 from github import GithubException
+from concurrent.futures import ThreadPoolExecutor, as_completed
  
 IGNORED_PATHS = {
     'node_modules', 'vendor', 'dist', 'build', 'venv', '.venv', 'tests','test','__tests__','spec','specs'
@@ -39,6 +40,8 @@ FUNCTION_LENGTH = {
     'warning':30, 
 }
 
+MAX_FILES_TO_ANALIZE = 30
+
 class AnalyzerService:
     
     def analyze_functions(self, repo, languages):
@@ -67,26 +70,29 @@ class AnalyzerService:
         
         files_to_analyze = [
             item for item in tree.tree
-            if item.type == 'blob' 
-            and self._has_extension(item.path, extensions)
-            and not self._is_ignored(item.path)
-        ][:30]
+            if item.type == 'blob' and self._has_extension(item.path, extensions) and not self._is_ignored(item.path)
+        ][:MAX_FILES_TO_ANALIZE]
  
         functions = []
         summary   = {'ok': 0, 'warning': 0, 'critical': 0}
  
-        for file_item in files_to_analyze:
+        def fetch_and_analyze(file_item):
             try:
                 content = repo.get_contents(file_item.path)
                 source_code = content.decoded_content.decode('utf-8', errors='ignore')
-            except Exception:
-                continue
- 
-            file_functions = self._analyze_file(source_code, file_item.path)
-            functions.extend(file_functions)
-            for f in file_functions:
-                summary[f['status']] += 1
- 
+            except:
+                return []
+            return self._analyze_file(source_code,file_item.path)
+
+        with ThreadPoolExecutor() as executor:
+            futures = {executor.submit(fetch_and_analyze, f): f for f in files_to_analyze}
+            
+            for future in futures:
+                    file_functions = future.result()
+                    functions.extend(file_functions)
+                    for f in file_functions:
+                        summary[f['status']] += 1
+                         
         order = {'critical': 0, 'warning': 1, 'ok': 2}
         functions.sort(key=lambda x: order[x['status']])
  

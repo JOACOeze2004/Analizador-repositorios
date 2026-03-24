@@ -1,6 +1,8 @@
 const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
 //const API = 'http://localhost:5000'
 
+const WAIT_TIME = 1000 //en ms
+
 let charts = {}
 
 function scoreColor(score) {
@@ -85,7 +87,7 @@ async function analyzeRepo() {
     const msgInterval = setInterval(() => {
         msgIndex = (msgIndex + 1) % messages.length
         document.getElementById('spinnerMsg').textContent = messages[msgIndex]
-    }, 3000)
+    }, WAIT_TIME)
  
     try {
         const res  = await fetchWithRetry(`${API}/analyze`, {
