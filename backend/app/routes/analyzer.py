@@ -34,21 +34,23 @@ def analyze():
         return jsonify({'error': str(e)}), 502
     
     try:
+        #Para analizar las funciones necesito el lenguaje en el q estan hechas, asi q la pido primero y q se bloquee el resto, mas q nada para evitar RC si la tiro como un thread mas.
+        languages = github_service.get_languages(repo)
+        
         with ThreadPoolExecutor() as executor:
             f_basic = executor.submit(github_service.get_basic_info, repo)
-            f_languajes = executor.submit(github_service.get_languages, repo)
             f_activity = executor.submit(github_service.get_commit_activity, repo)
             f_contributors = executor.submit(github_service.get_contributors, repo)
             f_issues_prs = executor.submit(github_service.get_issues_and_prs, repo)
             f_health = executor.submit(github_service.get_health_checklist, repo)
+            f_functions = executor.submit(analyzer_service.analyze_functions,repo,languages)
 
         basic_info = f_basic.result()
-        languages = f_languajes.result()
         activity = f_activity.result()
         contributors = f_contributors.result()
         issues_prs = f_issues_prs.result()
         health = f_health.result()
-        functions = analyzer_service.analyze_functions(repo, languages)
+        functions    = f_functions.result()
     except Exception as e:
         return jsonify({'error': f'Error al analizar el repositorio: {str(e)}'}), 500
  
