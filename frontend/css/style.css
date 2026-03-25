@@ -216,7 +216,7 @@ header span { color: var(--muted); font-size: 0.85rem; }
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  max-height: 220px;
+  max-height: 300px;
   overflow-y: auto;
 }
 .func-item {

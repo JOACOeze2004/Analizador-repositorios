@@ -1,7 +1,7 @@
-const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
-//const API = 'http://localhost:5000'
+//const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
+const API = 'http://localhost:5000'
 
-const WAIT_TIME = 1000 //en ms
+const WAIT_TIME = 2000 //en ms
 
 let charts = {}
 
@@ -145,26 +145,40 @@ function renderDashboard(analysis) {
 
     document.getElementById('statActivityTime').textContent = m.activity.activity_time
 
-    const cpm = m.activity.commits_per_month
+   const cpm = m.activity.commits_per_month
+
+    const sortedMonths = Object.entries(cpm)
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+
+    const monthLabels = sortedMonths.map(e => e[0])
+    const monthValues = sortedMonths.map(e => e[1])
+    
     charts.commits = new Chart(document.getElementById('chartCommits'), {
         type: 'line',
         data: {
-        labels:   Object.keys(cpm),
-        datasets: [{ data: Object.values(cpm), borderColor: ACCENT, backgroundColor: ACCENT + '22', fill: true, tension: 0.4, pointRadius: 3 }]
+        labels:   monthLabels,
+        datasets: [{ data: monthValues, borderColor: ACCENT, backgroundColor: ACCENT + '22', fill: true, tension: 0.4, pointRadius: 3 }]
     },
     options: chartDefaults()
     })
 
     const cpw_data = m.activity.commits_per_week
+
+    const sortedWeeks = Object.entries(cpw_data)
+    .sort((a, b) => {
+        const [d1, m1, y1] = a[0].split('/')
+        const [d2, m2, y2] = b[0].split('/')
+        return new Date(`20${y1}`, m1 - 1, d1) - new Date(`20${y2}`, m2 - 1, d2)
+    })
+
+    const weekLabels = sortedWeeks.map(e => e[0])
+    const weekValues = sortedWeeks.map(e => e[1])
+
     charts.weeks = new Chart(document.getElementById('chartWeeks'), {
         type: 'bar',
         data: {
-            labels:   Object.keys(cpw_data),
-            datasets: [{ 
-                data: Object.values(cpw_data), 
-                backgroundColor: ACCENT + '99', 
-                borderRadius: 4 
-            }]
+            labels:   weekLabels,
+            datasets: [{ data: weekValues, backgroundColor: ACCENT + '99', borderRadius: 4 }]
         },
         options: chartDefaults()
     })
