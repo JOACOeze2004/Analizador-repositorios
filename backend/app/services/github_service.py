@@ -74,12 +74,12 @@ class GithubService:
  
         for commit in commits:
             date = commit.commit.author.date
-            month_key = date.strftime('%Y-%m')          
+            month_key = date.replace(day=1).date()         
             commits_per_month[month_key] += 1
             commits_by_weekday[weekday_names[date.weekday()]] += 1
             commits_by_hour[date.hour] += 1
             monday = date - timedelta(days=date.weekday())
-            week_key = monday.strftime('%d/%m/%y')  
+            week_key = monday.date()  
             commits_per_week[week_key] += 1
  
         dates = [c.commit.author.date for c in commits]
@@ -108,7 +108,7 @@ class GithubService:
  
         return {
             'total_commits':        len(commits),
-            'commits_per_month':    dict(sorted(commits_per_month.items())),
+            'commits_per_month': [ {'month': k.strftime('%Y-%m'), 'count': v} for k, v in sorted(commits_per_month.items()) ],
             'commits_by_weekday':   dict(commits_by_weekday),
             'commits_by_hour':      {str(h): commits_by_hour[h] for h in range(24)},
             'first_commit':         first_commit.isoformat(),
@@ -117,7 +117,7 @@ class GithubService:
             'is_active':            is_active,
             'days_since_last_commit': days_since_last,
             'commits_per_week_avg': commits_per_week_avg,
-            'commits_per_week': dict(sorted(commits_per_week.items())),
+            'commits_per_week': [ {'week': k.strftime('%d/%m/%y'), 'count': v} for k, v in sorted(commits_per_week.items()) ],
         }
     
     def get_contributors(self, repo):
