@@ -267,19 +267,19 @@ function renderDashboard(analysis) {
  
     const funcs = m.functions
     if (funcs.supported) {
-        document.getElementById('funcOk').textContent   = funcs.summary.ok
-        document.getElementById('funcWarn').textContent = funcs.summary.warning
-        document.getElementById('funcCrit').textContent = funcs.summary.critical
- 
+
         const fList = document.getElementById('funcList')
         fList.innerHTML = ''
-        const critical_funcs = funcs.functions.filter(f => f.status !== 'ok')
-        const all_funcs = funcs.functions
-        let show_all = false
+        const activeFilters = new Set(['warning', 'critical'])
 
-        function render_functions(functions) {
+        function render_functions() {
             fList.innerHTML = ''
-            functions.forEach(f => {
+            const visible = funcs.functions.filter(f => activeFilters.has(f.status))
+            if (visible.length == 0){
+                fList.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">No hay funciones para mostrar.</p>`
+                return
+            }
+            visible.forEach(f => {
             fList.innerHTML += `
                 <div class="func-item">
                     <div>
@@ -290,23 +290,41 @@ function renderDashboard(analysis) {
                 </div>`
             })
         }
-        render_functions(critical_funcs)
 
-        const btnToggle = document.createElement('button')
-        btnToggle.className = 'btn-toggle-funcs'
-        btnToggle.textContent = `Ver todas (${all_funcs.length})`
-        btnToggle.onclick = () => {
-            show_all = !show_all
-            render_functions(show_all ? all_funcs : critical_funcs)
-            btnToggle.textContent = show_all 
-                ? `Ver solo problemáticas (${critical_funcs.length})`
-                : `Ver todas (${all_funcs.length})`
+        function setupFuncStats(){
+            const statEls = {
+                ok: document.getElementById('funcOk').closest('.func-stat'),
+                warning: document.getElementById('funcWarn').closest('.func-stat'),
+                critical: document.getElementById('funcCrit').closest('.func-stat'),
+            }
+
+            document.getElementById('funcOk').textContent = funcs.summary.ok
+            document.getElementById('funcWarn').textContent = funcs.summary.warning
+            document.getElementById('funcCrit').textContent = funcs.summary.critical
+    
+            Object.entries(statEls).forEach(([status, el]) => {
+                el.style.cursor = 'pointer'
+                el.style.opacity = activeFilters.has(status) ? '1' : '0.35'
+                el.style.transition = 'opacity 0.2s'
+
+                const fresh = el.cloneNode(true)
+                el.parentNode.replaceChild(fresh, el)
+                fresh.addEventListener('click', () => {
+                    if (activeFilters.has(status)) {
+                        activeFilters.delete(status)
+                        fresh.style.opacity = '0.35'
+                    } else {
+                        activeFilters.add(status)
+                        fresh.style.opacity = '1'
+                    }
+                    render_functions()
+                    })
+                })
         }
-        fList.after(btnToggle)
-
+        setupFuncStats()
+        render_functions()
     } else {
-        document.getElementById('functionsCard').innerHTML = `
-        <h4>Calidad de código</h4>
+        document.getElementById('functionsCard').innerHTML = ` <h4>Calidad de código</h4>
         <p style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem">${funcs.message}</p>`
     }
     document.getElementById('dashboard').style.display = 'block'
