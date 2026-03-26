@@ -1,5 +1,4 @@
-const API = 'https://analizador-repositorios-production-57ab.up.railway.app'    // http://localhost:5000 para debugear en local
-//const API = 'http://localhost:5000'
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000': 'https://analizador-repositorios-production-57ab.up.railway.app';
 
 const WAIT_TIME = 2000 //en ms
 
