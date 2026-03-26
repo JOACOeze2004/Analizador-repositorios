@@ -32,7 +32,7 @@ class GithubService:
             'updated_at':    repo.updated_at.isoformat(),
             'stars':         repo.stargazers_count,
             'forks':         repo.forks_count,
-            'watchers':      repo.watchers_count,
+            'watchers':      repo.subscribers_count,
             'open_issues':   repo.open_issues_count,
             'default_branch':repo.default_branch,
             'license':       repo.license.name if repo.license else None,
