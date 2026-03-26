@@ -33,6 +33,19 @@ const WARNING_ICON = '⚠ '
 const REPO_INPUT_ID = 'repoInput'
 const DASHBOARD_ID = 'dashboard'
 const ANALIZEBTN_ID = 'analyzeBtn'
+const SPINNER_WRAP_ID = 'spinnerWrap'
+const SPINNER_MESSAGE_ID = 'spinnerMsg'
+const ERROR_UNKNON_MESSAGE = 'Error desconocido'
+const STANDARD_ERROR_MESSAGE = 'No se pudo conectar con el servidor. ¿Está corriendo el backend?'
+const NONE_DISPLAY_SYLE = 'none'
+const FUNC_OK = 'funcOk'
+const FUNC_WARN = 'funcWarn'
+const FUNC_CRIT = 'funcCrit'
+const FUNC_STATUS = '.func-stat'
+const CHART_BORDER_RADIOUS = 4
+const CHART_BACKGROUND_COLOR = '99'
+
+
 
 
 const WEEK_DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
@@ -95,16 +108,16 @@ async function analyzeRepo() {
         return
     }
  
-    document.getElementById(ERROR_BOX_ID).style.display = 'none'
-    document.getElementById(DASHBOARD_ID).style.display = 'none'
-    document.getElementById('spinnerWrap').style.display = 'block'
+    document.getElementById(ERROR_BOX_ID).style.display = NONE_DISPLAY_SYLE
+    document.getElementById(DASHBOARD_ID).style.display = NONE_DISPLAY_SYLE
+    document.getElementById(SPINNER_WRAP_ID).style.display = 'block'
     document.getElementById(ANALIZEBTN_ID).disabled = true
     destroyCharts()
 
     let msgIndex = 0
     const msgInterval = setInterval(() => {
         msgIndex = (msgIndex + 1) % WAITING_MESSAGES.length
-        document.getElementById('spinnerMsg').textContent = WAITING_MESSAGES[msgIndex]
+        document.getElementById(SPINNER_MESSAGE_ID).textContent = WAITING_MESSAGES[msgIndex]
     }, WAIT_TIME)
  
     try {
@@ -114,16 +127,16 @@ async function analyzeRepo() {
         clearInterval(msgInterval)
         const data = await res.json()
         if (!res.ok) {
-            showError(data.error || 'Error desconocido')
+            showError(data.error || ERROR_UNKNON_MESSAGE)
             return
         }
         renderDashboard(data.analysis)
  
     } catch(e) {
-        showError('No se pudo conectar con el servidor. ¿Está corriendo el backend?')
+        showError(STANDARD_ERROR_MESSAGE)
     } finally {
         clearInterval(msgInterval)
-        document.getElementById('spinnerWrap').style.display = 'none'
+        document.getElementById(SPINNER_WRAP_ID).style.display = NONE_DISPLAY_SYLE
         document.getElementById(ANALIZEBTN_ID).disabled = false
     }
 }
@@ -231,8 +244,8 @@ function renderCharts(m) {
             labels: cpw.map(e => e.week),
             datasets: [{
                 data: cpw.map(e => e.count),
-                backgroundColor: ACCENT + '99',
-                borderRadius: 4
+                backgroundColor: ACCENT + CHART_BACKGROUND_COLOR,
+                borderRadius: CHART_BORDER_RADIOUS
             }]
         },
         options: chartDefaults()
@@ -245,8 +258,8 @@ function renderCharts(m) {
             labels: Object.keys(hours).map(h => `${h}hs`),
             datasets: [{
                 data: Object.values(hours),
-                backgroundColor: ACCENT2 + '99',
-                borderRadius: 4
+                backgroundColor: ACCENT2 + CHART_BACKGROUND_COLOR,
+                borderRadius: CHART_BORDER_RADIOUS
             }]
         },
         options: chartDefaults()
@@ -281,8 +294,8 @@ function renderCharts(m) {
             labels: WEEK_DAYS,
             datasets: [{
                 data: WEEK_DAYS.map(d => wd[d] || 0),
-                backgroundColor: ACCENT + '99',
-                borderRadius: 4
+                backgroundColor: ACCENT + CHART_BACKGROUND_COLOR,
+                borderRadius: CHART_BORDER_RADIOUS
             }]
         },
         options: chartDefaults()
@@ -295,8 +308,8 @@ function renderCharts(m) {
             labels: top.map(c => c.username),
             datasets: [{
                 data: top.map(c => c.commits),
-                backgroundColor: ACCENT2 + '99',
-                borderRadius: 4
+                backgroundColor: ACCENT2 + CHART_BACKGROUND_COLOR,
+                borderRadius: CHART_BORDER_RADIOUS
             }]
         },
         options: { ...chartDefaults(), indexAxis: 'y' }
@@ -314,7 +327,7 @@ function renderCharts(m) {
                     m.issues_prs.prs.closed_sample
                 ],
                 backgroundColor: ['#f76f6f99','#e8e8f099','#f7c94899','#4ecca399'],
-                borderRadius: 4
+                borderRadius: CHART_BORDER_RADIOUS
             }]
         },
         options: chartDefaults()
@@ -339,7 +352,7 @@ function renderFunctions(funcs) {
         const visible = funcs.functions.filter(f => activeFilters.has(f.status))
 
         if (visible.length === 0) {
-            fList.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">
+            fList.innerHTML += `<p style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">
                 No hay funciones para mostrar.
             </p>`
             return
@@ -359,14 +372,14 @@ function renderFunctions(funcs) {
 
     function setupStats() {
         const statEls = {
-            ok: document.getElementById('funcOk').closest('.func-stat'),
-            warning: document.getElementById('funcWarn').closest('.func-stat'),
-            critical: document.getElementById('funcCrit').closest('.func-stat'),
+            ok: document.getElementById(FUNC_OK).closest(FUNC_STATUS),
+            warning: document.getElementById(FUNC_WARN).closest(FUNC_STATUS),
+            critical: document.getElementById(FUNC_CRIT).closest(FUNC_STATUS),
         }
 
-        document.getElementById('funcOk').textContent = funcs.summary.ok
-        document.getElementById('funcWarn').textContent = funcs.summary.warning
-        document.getElementById('funcCrit').textContent = funcs.summary.critical
+        document.getElementById(FUNC_OK).textContent = funcs.summary.ok
+        document.getElementById(FUNC_WARN).textContent = funcs.summary.warning
+        document.getElementById(FUNC_CRIT).textContent = funcs.summary.critical
         Object.entries(statEls).forEach(([status, el]) => {
             el.style.cursor = 'pointer'
             el.style.opacity = activeFilters.has(status) ? '1' : '0.35'
@@ -383,9 +396,9 @@ function renderFunctions(funcs) {
                 renderList()
                 })
             })
-        }
-        setupStats()
-        renderList()
+    }
+    setupStats()
+    renderList()
 }
 
 function renderDashboard(analysis) {
