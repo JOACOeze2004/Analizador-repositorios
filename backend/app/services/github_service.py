@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import timedelta
 
 MAX_COMMITS = 1000
+MAX_CONTRIBUTORS = 10
 
 class GithubService:
 
@@ -142,6 +143,7 @@ class GithubService:
             })
 
         ranking.sort(key=lambda x: x['commits'], reverse=True)
+        ranking = ranking[:MAX_CONTRIBUTORS]
 
         total_commits = sum(c['commits'] for c in ranking)
         for contributor in ranking:
