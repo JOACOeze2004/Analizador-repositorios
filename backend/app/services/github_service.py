@@ -27,6 +27,7 @@ WEEKDAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'
 
 ACTIVITY_ACTIVE_DAYS_THRESHOLD = 90
 BUS_FACTOR_THRESHOLD = 80
+HOURS_RANGE = range(24)
 
 
 class GithubService:
@@ -73,75 +74,83 @@ class GithubService:
             for lang, bytes_ in sorted(raw.items(), key=lambda x: x[1], reverse=True)
         }
     
-    def get_commit_activity(self, repo):
-        commits = list(repo.get_commits()[:MAX_COMMITS])
- 
-        if not commits:
-            return {
-                'total_commits': 0,
-                'commits_per_month': {},
-                'commits_by_weekday': {},
-                'commits_by_hour': {},
-                'first_commit': None,
-                'last_commit': None,
-                'is_active': False,
-                'commits_per_week_avg': 0,
-            }
 
+    def process_commit_dates(self, commits):
         commits_per_month = defaultdict(int)
         commits_by_weekday = defaultdict(int)
         commits_by_hour = defaultdict(int)
         commits_per_week = defaultdict(int)
 
- 
-        weekday_names = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
- 
         for commit in commits:
             date = commit.commit.author.date
-            month_key = date.replace(day=1).date()         
+
+            month_key = date.replace(day=1).date()
             commits_per_month[month_key] += 1
-            commits_by_weekday[weekday_names[date.weekday()]] += 1
+            commits_by_weekday[WEEKDAY_NAMES[date.weekday()]] += 1
             commits_by_hour[date.hour] += 1
+
             monday = date - timedelta(days=date.weekday())
-            week_key = monday.date()  
-            commits_per_week[week_key] += 1
- 
+            commits_per_week[monday.date()] += 1
+
+        return commits_per_month, commits_by_weekday, commits_by_hour, commits_per_week
+    
+    def calculate_activity_stats(self, commits):
         dates = [c.commit.author.date for c in commits]
-        last_commit = max(dates)
-        first_commit = min(dates)
- 
+
+        first = min(dates)
+        last = max(dates)
+
         now = datetime.now(timezone.utc)
-        last_commit_aware = last_commit.replace(tzinfo=timezone.utc) if last_commit.tzinfo is None else last_commit
-        days_since_last = (now - last_commit_aware).days
-        is_active = days_since_last < 90
- 
-        total_weeks = max((last_commit_aware - first_commit.replace(tzinfo=timezone.utc)).days / 7, 1)
+        last_aware = last if last.tzinfo else last.replace(tzinfo=timezone.utc)
+        days_since_last = (now - last_aware).days
+        is_active = days_since_last < ACTIVITY_ACTIVE_DAYS_THRESHOLD
+
+        total_weeks = max((last_aware - first.replace(tzinfo=timezone.utc)).days / 7, 1)
         commits_per_week_avg = round(len(commits) / total_weeks, 1)
 
-        first = first_commit.replace(tzinfo=timezone.utc) if first_commit.tzinfo is None else first_commit
-        last = last_commit_aware
+        return first, last, is_active, days_since_last, commits_per_week_avg
+    
+    def format_activity_time(self, first, last):
+        first = first if first.tzinfo else first.replace(tzinfo=timezone.utc)
+        last = last if last.tzinfo else last.replace(tzinfo=timezone.utc)
+
         delta = last - first
-        total_days = delta.days
-        years = total_days // 365
-        months = (total_days % 365) // 30
+        days = delta.days
+        years = days // 365
+        months = (days % 365) // 30
 
         if years > 0:
-            activity_time = f'{years}a {months}m'
-        else:
-            activity_time = f'{months} meses'
- 
+            return f'{years}a {months}m'
+        return f'{months} meses'
+
+    def get_commit_activity(self, repo):
+        commits = list(repo.get_commits()[:MAX_COMMITS])
+
+        if not commits:
+            return EMPTY_ACTIVITY.copy()
+
+        (cpm, cwd, ch, cpw) = self.process_commit_dates(commits)
+
+        first, last, is_active, days_since_last, avg = self.calculate_activity_stats(commits)
+
+        activity_time = self.format_activity_time(first, last)
+
         return {
-            'total_commits':        len(commits),
-            'commits_per_month': [ {'month': k.strftime('%Y-%m'), 'count': v} for k, v in sorted(commits_per_month.items()) ],
-            'commits_by_weekday':   dict(commits_by_weekday),
-            'commits_by_hour':      {str(h): commits_by_hour[h] for h in range(24)},
-            'first_commit':         first_commit.isoformat(),
-            'last_commit':          last_commit.isoformat(),
-            'activity_time':        activity_time,
-            'is_active':            is_active,
+            'total_commits': len(commits),
+            'commits_per_month': [
+                {'month': k.strftime('%Y-%m'), 'count': v}
+                for k, v in sorted(cpm.items())
+            ],
+            'commits_by_weekday': dict(cwd),
+            'commits_by_hour': {str(h): ch[h] for h in HOURS_RANGE},
+            'first_commit': first.isoformat(),
+            'last_commit': last.isoformat(),
+            'activity_time': activity_time,
+            'is_active': is_active,
             'days_since_last_commit': days_since_last,
-            'commits_per_week_avg': commits_per_week_avg,
-            'commits_per_week': [ {'week': k.strftime('%d/%m/%y'), 'count': v} for k, v in sorted(commits_per_week.items()) ],
+            'commits_per_week_avg': avg,
+            'commits_per_week': [ {'week': k.strftime('%d/%m/%y'), 'count': v} for k, v in sorted(cpw.items())
+            ],
         }
     
     def get_contributors(self, repo):
@@ -183,9 +192,9 @@ class GithubService:
                 break
  
         return {
-            'total':      len(ranking),
+            'total': len(ranking),
             'bus_factor': bus_factor,
-            'ranking':    ranking[:10], 
+            'ranking': ranking[:10], 
         }
  
     def get_issues_and_prs(self, repo):
