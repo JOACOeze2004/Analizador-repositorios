@@ -162,11 +162,12 @@ function renderMeta(m) {
     meta.innerHTML += `<span class="tag">🍴 ${m.basic_info.forks} forks</span>`
     meta.innerHTML += `<span class="tag">👁 ${m.basic_info.watchers} watchers</span>`
     meta.innerHTML += `<span class="tag">⭐ ${m.basic_info.stars} stars</span>`
+    meta.innerHTML += `<span class="tag">👥 ${m.contributors.total} contributors</span>`
 }
 
 function renderStats(m) {
     document.getElementById('statCommits').textContent = m.activity.total_commits
-    document.getElementById('statContribs').textContent = m.contributors.total
+    document.getElementById('statContribs').textContent = m.issues_prs.issues.open || 'No hay'
     document.getElementById('statCpw').textContent = m.activity.commits_per_week_avg
 
     const openPRs = m.issues_prs.prs.open
