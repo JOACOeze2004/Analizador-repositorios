@@ -318,7 +318,7 @@ function renderCharts(m) {
     charts.issues = new Chart(document.getElementById('chartIssues'), {
         type: 'bar',
         data: {
-            labels: ['Issues abiertas', 'Issues cerradas', 'PRs abiertas', 'PRs cerradas'],
+            labels: ['Issues aun abiertos', 'Issues cerrados', 'PRs aun abiertos', 'PRs cerrados'],
             datasets: [{
                 data: [
                     m.issues_prs.issues.open,
