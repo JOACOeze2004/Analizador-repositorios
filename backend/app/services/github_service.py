@@ -153,50 +153,57 @@ class GithubService:
             ],
         }
     
+    def build_contributor(self, c):
+        additions = sum(w.a for w in c.weeks)
+        deletions = sum(w.d for w in c.weeks)
+
+        return {
+            'username': c.author.login,
+            'avatar_url': c.author.avatar_url,
+            'commits': c.total,
+            'additions': additions,
+            'deletions': deletions,
+        }
+    
+    def calculate_bus_factor(self, ranking):
+        accumulated = 0
+        count = 0
+        for c in ranking:
+            accumulated += c['ownership_pct']
+            count += 1
+            if accumulated >= BUS_FACTOR_THRESHOLD:
+                break
+        return count
+    
     def get_contributors(self, repo):
         try:
             stats = repo.get_stats_contributors()
         except GithubException:
-            return {'total': 0, 'bus_factor': 0, 'ranking': []}
- 
+            return EMPTY_CONTRIBUTORS.copy()
+
         if not stats:
-            return {'total': 0, 'bus_factor': 0, 'ranking': []}
- 
-        ranking = []
-        for contributor in stats:
-            total_additions = sum(w.a for w in contributor.weeks)
-            total_deletions = sum(w.d for w in contributor.weeks)
-            ranking.append({
-                'username':   contributor.author.login,
-                'avatar_url': contributor.author.avatar_url,
-                'commits':    contributor.total,
-                'additions':  total_additions,
-                'deletions':  total_deletions,
-            })
+            return EMPTY_CONTRIBUTORS.copy()
+
+        ranking = [self.build_contributor(c) for c in stats]
 
         ranking.sort(key=lambda x: x['commits'], reverse=True)
         ranking = ranking[:MAX_CONTRIBUTORS]
 
         total_commits = sum(c['commits'] for c in ranking)
-        for contributor in ranking:
-            contributor['ownership_pct'] = round(
-                (contributor['commits'] / total_commits) * 100, 1
-            ) if total_commits > 0 else 0
 
-        bus_factor = 0
-        accumulated = 0
-        for contributor in ranking:
-            accumulated += contributor['ownership_pct']
-            bus_factor += 1
-            if accumulated >= 80:
-                break
+        for c in ranking:
+            c['ownership_pct'] = round( (c['commits'] / total_commits) * 100, 1 ) if total_commits > 0 else 0
+
+            bus_factor = self.calculate_bus_factor(ranking)
+            return {
+                'total': len(ranking),
+                'bus_factor': bus_factor,
+                'ranking': ranking[:10],
+            }
  
-        return {
-            'total': len(ranking),
-            'bus_factor': bus_factor,
-            'ranking': ranking[:10], 
-        }
- 
+    
+
+
     def get_issues_and_prs(self, repo):
         closed_issues = list(repo.get_issues(state='closed').get_page(0))
         open_issues   = list(repo.get_issues(state='open').get_page(0))
