@@ -74,7 +74,6 @@ def analyze_repository(repo_url):
     results = fetch_repo_data_concurrently(repo,languages)
     
     score = analyzer_service.calculate_score(
-        activity=results['activity'],
         contributors=results['contributors'],
         health=results['health'],
         issues_prs=results['issues_prs'],

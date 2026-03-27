@@ -70,7 +70,7 @@ class AnalyzerService:
     def get_files_to_analyze(self,tree,extensions):
         return [
             item for item in tree.tree
-            if item.type == 'blob' and self._has_extension(item.path, extensions) and not self._is_ignored(item.path)
+            if item.type == 'blob' and self.has_extension(item.path, extensions) and not self._is_ignored(item.path)
         ][:MAX_FILES_TO_ANALIZE]
         
     def process_files(self,repo,files):
@@ -83,7 +83,7 @@ class AnalyzerService:
                 source_code = content.decoded_content.decode('utf-8', errors='ignore')
             except:
                 return []
-            return self._analyze_file(source_code, file_item.path)
+            return self.analyze_file(source_code, file_item.path)
 
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(fetch_and_analyze, f) for f in files]
@@ -105,7 +105,7 @@ class AnalyzerService:
         if not languages_to_analize:
             return self.unsupported_response(languages)
          
-        extensions = self._get_extensions(languages_to_analize)
+        extensions = self.get_extensions(languages_to_analize)
         tree = self.get_repo_tree(repo)
         if not tree:
             return self.tree_error_response()
@@ -130,16 +130,16 @@ class AnalyzerService:
         #     Colaboración       20 pts
         #     Issues & PRs       20 pts
 
-    def calculate_score(self, activity, contributors, health, issues_prs, functions_summary):
-        score = 0
-        
+    def health_score(self,health):
         health_checks = {
             'has_readme': 10, 'has_license': 8, 'has_gitignore': 6,
             'has_contributing': 5, 'has_changelog': 3, 'has_description': 2, 'has_topics': 1,
         }
-        score += min(sum(pts for k, pts in health_checks.items() if health.get(k)), 35)
-
-
+        score = sum(pts for k, pts in health_checks.items() if health.get(k))
+        return min(score,35)
+    
+    def contributors_score(self,contributors):
+        score = 0
         total = contributors.get('total', 0)
         if total >= 10: score += 10
         elif total >= 5: score += 7
@@ -150,7 +150,9 @@ class AnalyzerService:
         if bf >= 4:   score += 10
         elif bf >= 2: score += 6
         else:         score += 2
-
+        return score
+    
+    def issues_score(self,issues_prs):
         issues_score = 0
         avg_close = issues_prs.get('issues', {}).get('avg_close_days')
         if avg_close is not None:
@@ -166,18 +168,28 @@ class AnalyzerService:
  
         if avg_close is None and avg_merge is None:
             issues_score = 10
-        
-        score += min(issues_score, 20)
+        return min(issues_score,20)
     
-        total_funcs = sum(functions_summary.values())
-        if total_funcs > 0:
-            ok_pct = functions_summary.get('ok', 0) / total_funcs
-            if ok_pct >= 0.9:   score += 25
-            elif ok_pct >= 0.7: score += 18
-            elif ok_pct >= 0.5: score += 10
-            elif ok_pct > 0: score += 5
-        else:
-            score += 12
+    def code_score(self,functions_summary):
+        total = sum(functions_summary.values())
+        if total == 0:
+            return 12
+
+        ok_pct = functions_summary.get('ok', 0) / total
+
+        if ok_pct >= 0.9: return 25
+        if ok_pct >= 0.7: return 18
+        if ok_pct >= 0.5: return 10
+        if ok_pct > 0: return 5
+
+        return 0
+
+    def calculate_score(self, contributors, health, issues_prs, functions_summary):
+        score = 0
+        score += self.health_score(health)
+        score += self.contributors_score(contributors)
+        score += self.issues_score(issues_prs)
+        score += self.code_score(functions_summary)
 
         return min(score, 100)
  
@@ -188,29 +200,29 @@ class AnalyzerService:
         if score >= 30: return 'Necesita mejoras'
         return 'Crítico'
  
-    def _analyze_file(self, source_code, filepath):
+    def analyze_file(self, source_code, filepath):
         functions = []
         try:
             analysis = lizard.analyze_file.analyze_source_code(filepath, source_code)
             for func in analysis.function_list:
-                functions.append(self._build_function_entry( name=func.name, filepath=filepath, line=func.start_line, length=func.length, ))
+                functions.append(self.build_function_entry( name=func.name, filepath=filepath, line=func.start_line, length=func.length, ))
         except Exception:
             pass
         return functions        
  
-    def _build_function_entry(self, name, filepath, line, length):
+    def build_function_entry(self, name, filepath, line, length):
         if length <= FUNCTION_LENGTH['ok']:       status = 'ok'
         elif length <= FUNCTION_LENGTH['warning']: status = 'warning'
         else:                                      status = 'critical'
         return {'name': name, 'file': filepath, 'line': line, 'length': length, 'status': status}
  
-    def _get_extensions(self, languages):
+    def get_extensions(self, languages):
         extensions = []
         for lang in languages:
             extensions.extend(LANGUAGE_EXTENSIONS.get(lang, []))
         return extensions
  
-    def _has_extension(self, path, extensions):
+    def has_extension(self, path, extensions):
         return any(path.endswith(ext) for ext in extensions)
     
     def _is_ignored(self, path):
