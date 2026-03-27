@@ -194,12 +194,12 @@ class GithubService:
         for c in ranking:
             c['ownership_pct'] = round( (c['commits'] / total_commits) * 100, 1 ) if total_commits > 0 else 0
 
-            bus_factor = self.calculate_bus_factor(ranking)
-            return {
-                'total': len(ranking),
-                'bus_factor': bus_factor,
-                'ranking': ranking[:10],
-            }
+        bus_factor = self.calculate_bus_factor(ranking)
+        return {
+            'total': len(ranking),
+            'bus_factor': bus_factor,
+            'ranking': ranking[:10],
+        }
  
     
 
