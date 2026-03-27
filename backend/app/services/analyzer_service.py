@@ -37,6 +37,63 @@ FUNCTION_LENGTH = {
 }
 
 MAX_FILES_TO_ANALIZE = 30
+TREE_ERROR_RESPONSE = 'No se pudo acceder al árbol de archivos.'
+MAX_HEALTH_SCORE = 35
+MAX_ISSUES_SCORE = 20
+CODE_SCORE_NO_FUNCS = 12
+
+HEALTH_CHECK_SCORES = {
+    'has_readme': 10,
+    'has_license': 8,
+    'has_gitignore': 6,
+    'has_contributing': 5,
+    'has_changelog': 3,
+    'has_description': 2,
+    'has_topics': 1,
+}
+
+CONTRIBUTOR_THRESHOLDS = {
+    'total': [(10, 10), (5, 7), (2, 4), (0, 1)],
+    'bus_factor': [(4, 10), (2, 6), (0, 2)],
+}
+
+ISSUE_TIME_THRESHOLDS = [
+    (3, 10),
+    (7, 7),
+    (30, 3),
+]
+
+PR_TIME_THRESHOLDS = [
+    (3, 10),
+    (7, 7),
+    (14, 3),
+]
+
+CODE_SCORE_THRESHOLDS = [
+    (0.9, 25),
+    (0.7, 18),
+    (0.5, 10),
+    (0.0, 5),
+]
+CODE_SCORE_NO_FUNCS = 12
+FUNCTION_STATUSES = ('ok', 'warning', 'critical')
+FUNCTION_ORDER = {'critical': 0, 'warning': 1, 'ok': 2}
+
+EXCELLENT_SCORE = 85
+EXCELLENT_SCORE_MESSAGE = 'Excelente'
+
+GOOD_SCORE = 75
+GOOD_SCORE_MESSAGE = 'Bueno'
+
+REGULAR_SCORE = 50
+REGULAR_SCORE_MESSAGE = 'Regular'
+
+BAD_SCORE = 30
+BAD_SCORE_MESSAGE = 'Necesita mejoras'
+
+CRITICAL_MESSAGE = 'critico'
+
+
 
 class AnalyzerService:
 
@@ -62,7 +119,7 @@ class AnalyzerService:
     def tree_error_response(self):
         return {
             'supported': False,
-            'message': 'No se pudo acceder al árbol de archivos.',
+            'message': TREE_ERROR_RESPONSE,
             'functions': [],
             'summary': {'ok': 0, 'warning': 0, 'critical': 0}
         }
@@ -97,7 +154,7 @@ class AnalyzerService:
     
     def sort_functions(self, functions):
         order = {'critical': 0, 'warning': 1, 'ok': 2}
-        return sorted(functions, key=lambda x: order[x['status']])
+        return sorted(functions, key=lambda x: FUNCTION_ORDER[x['status']])
  
     
     def analyze_functions(self, repo, languages):
@@ -131,57 +188,61 @@ class AnalyzerService:
         #     Issues & PRs       20 pts
 
     def health_score(self,health):
-        health_checks = {
-            'has_readme': 10, 'has_license': 8, 'has_gitignore': 6,
-            'has_contributing': 5, 'has_changelog': 3, 'has_description': 2, 'has_topics': 1,
-        }
-        score = sum(pts for k, pts in health_checks.items() if health.get(k))
-        return min(score,35)
+        score = sum(
+            pts for k, pts in HEALTH_CHECK_SCORES.items()
+            if health.get(k)
+        )
+        return min(score, MAX_HEALTH_SCORE)
     
     def contributors_score(self,contributors):
         score = 0
         total = contributors.get('total', 0)
-        if total >= 10: score += 10
-        elif total >= 5: score += 7
-        elif total >= 2: score += 4
-        else: score += 1
+        score = 0
+
+        total = contributors.get('total', 0)
+        for threshold, pts in CONTRIBUTOR_THRESHOLDS['total']:
+            if total >= threshold:
+                score += pts
+                break
 
         bf = contributors.get('bus_factor', 1)
-        if bf >= 4:   score += 10
-        elif bf >= 2: score += 6
-        else:         score += 2
+        for threshold, pts in CONTRIBUTOR_THRESHOLDS['bus_factor']:
+            if bf >= threshold:
+                score += pts
+                break
         return score
     
     def issues_score(self,issues_prs):
-        issues_score = 0
+        score = 0
         avg_close = issues_prs.get('issues', {}).get('avg_close_days')
         if avg_close is not None:
-            if avg_close <= 3: issues_score += 10
-            elif avg_close <= 7: issues_score += 7
-            elif avg_close <= 30: issues_score += 3
+            for t, pts in ISSUE_TIME_THRESHOLDS:
+                if avg_close <= t:
+                    score += pts
+                    break
  
         avg_merge = issues_prs.get('prs', {}).get('avg_merge_days')
         if avg_merge is not None:
-            if avg_merge <= 3: issues_score += 10
-            elif avg_merge <= 7: issues_score += 7
-            elif avg_merge <= 14: issues_score += 3
+            for t, pts in PR_TIME_THRESHOLDS:
+                if avg_merge <= t:
+                    score += pts
+                    break
+
  
         if avg_close is None and avg_merge is None:
-            issues_score = 10
-        return min(issues_score,20)
+            return 10
+        return min(score,MAX_ISSUES_SCORE)
     
     def code_score(self,functions_summary):
-        total = sum(functions_summary.values())
+        total = sum(functions_summary.get(k, 0) for k in FUNCTION_STATUSES)
         if total == 0:
-            return 12
+            return CODE_SCORE_NO_FUNCS
 
         ok_pct = functions_summary.get('ok', 0) / total
 
-        if ok_pct >= 0.9: return 25
-        if ok_pct >= 0.7: return 18
-        if ok_pct >= 0.5: return 10
-        if ok_pct > 0: return 5
-
+        for threshold, pts in CODE_SCORE_THRESHOLDS:
+            if ok_pct >= threshold:
+                return pts
         return 0
 
     def calculate_score(self, contributors, health, issues_prs, functions_summary):
@@ -194,11 +255,11 @@ class AnalyzerService:
         return min(score, 100)
  
     def get_score_label(self, score):
-        if score >= 85: return 'Excelente'
-        if score >= 70: return 'Bueno'
-        if score >= 50: return 'Regular'
-        if score >= 30: return 'Necesita mejoras'
-        return 'Crítico'
+        if score >= EXCELLENT_SCORE: return EXCELLENT_SCORE_MESSAGE
+        if score >= GOOD_SCORE: return GOOD_SCORE_MESSAGE
+        if score >= REGULAR_SCORE: return REGULAR_SCORE_MESSAGE
+        if score >= BAD_SCORE: return BAD_SCORE_MESSAGE
+        return CRITICAL_MESSAGE
  
     def analyze_file(self, source_code, filepath):
         functions = []
@@ -211,9 +272,12 @@ class AnalyzerService:
         return functions        
  
     def build_function_entry(self, name, filepath, line, length):
-        if length <= FUNCTION_LENGTH['ok']:       status = 'ok'
-        elif length <= FUNCTION_LENGTH['warning']: status = 'warning'
-        else:                                      status = 'critical'
+        if length <= FUNCTION_LENGTH['ok']:
+            status = 'ok'
+        elif length <= FUNCTION_LENGTH['warning']:
+            status = 'warning'
+        else:
+            status = 'critical'
         return {'name': name, 'file': filepath, 'line': line, 'length': length, 'status': status}
  
     def get_extensions(self, languages):
