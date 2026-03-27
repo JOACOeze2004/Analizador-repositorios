@@ -201,12 +201,9 @@ class GithubService:
             'ranking': ranking[:10],
         }
  
-    
-
-
     def get_issues_and_prs(self, repo):
-        closed_issues = list(repo.get_issues(state='closed').get_page(0))
-        open_issues   = list(repo.get_issues(state='open').get_page(0))
+        closed_issues = [i for i in repo.get_issues(state='closed').get_page(0) if not i.pull_request]
+        open_issues   = [i for i in repo.get_issues(state='open').get_page(0)   if not i.pull_request]
         close_times = []
         for issue in closed_issues:
             if issue.pull_request:
