@@ -94,12 +94,17 @@ BAD_SCORE_MESSAGE = 'Necesita mejoras'
 CRITICAL_MESSAGE = 'critico'
 
 
-
 class AnalyzerService:
 
     def get_supported_languages(self,languages):
         repo_languages = set(languages.keys())
         return repo_languages & SUPPORTED_LANGUAGES
+    
+    def _score_from_thresholds(self, value, thresholds, reverse=False):
+        for t, pts in thresholds:
+            if (value >= t) if reverse else (value <= t):
+                return pts
+        return 0
     
     def unsupported_response(self,languages):
         repo_languages = languages.keys()
@@ -153,7 +158,6 @@ class AnalyzerService:
         return functions, summary
     
     def sort_functions(self, functions):
-        order = {'critical': 0, 'warning': 1, 'ok': 2}
         return sorted(functions, key=lambda x: FUNCTION_ORDER[x['status']])
  
     
@@ -195,40 +199,24 @@ class AnalyzerService:
         return min(score, MAX_HEALTH_SCORE)
     
     def contributors_score(self,contributors):
-        score = 0
         total = contributors.get('total', 0)
-        score = 0
-
-        total = contributors.get('total', 0)
-        for threshold, pts in CONTRIBUTOR_THRESHOLDS['total']:
-            if total >= threshold:
-                score += pts
-                break
-
         bf = contributors.get('bus_factor', 1)
-        for threshold, pts in CONTRIBUTOR_THRESHOLDS['bus_factor']:
-            if bf >= threshold:
-                score += pts
-                break
-        return score
+
+        return (
+            self._score_from_thresholds(total, CONTRIBUTOR_THRESHOLDS['total'], reverse=True)
+            + self._score_from_thresholds(bf, CONTRIBUTOR_THRESHOLDS['bus_factor'], reverse=True)
+        )
     
     def issues_score(self,issues_prs):
         score = 0
         avg_close = issues_prs.get('issues', {}).get('avg_close_days')
         if avg_close is not None:
-            for t, pts in ISSUE_TIME_THRESHOLDS:
-                if avg_close <= t:
-                    score += pts
-                    break
+            score += self._score_from_thresholds(avg_close, ISSUE_TIME_THRESHOLDS)
  
         avg_merge = issues_prs.get('prs', {}).get('avg_merge_days')
         if avg_merge is not None:
-            for t, pts in PR_TIME_THRESHOLDS:
-                if avg_merge <= t:
-                    score += pts
-                    break
+            score += self._score_from_thresholds(avg_merge, PR_TIME_THRESHOLDS)
 
- 
         if avg_close is None and avg_merge is None:
             return 10
         return min(score,MAX_ISSUES_SCORE)
@@ -239,11 +227,7 @@ class AnalyzerService:
             return CODE_SCORE_NO_FUNCS
 
         ok_pct = functions_summary.get('ok', 0) / total
-
-        for threshold, pts in CODE_SCORE_THRESHOLDS:
-            if ok_pct >= threshold:
-                return pts
-        return 0
+        return self._score_from_thresholds(ok_pct, CODE_SCORE_THRESHOLDS, reverse=True)
 
     def calculate_score(self, contributors, health, issues_prs, functions_summary):
         score = 0
