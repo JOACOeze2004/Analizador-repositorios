@@ -91,7 +91,6 @@ def analyze_repository(repo_url):
 def save_analysis(repo_url, data):
     metrics = data['metrics']
     basic_info = metrics['basic_info']
-
     analysis = Analysis(
         repo_url=repo_url,
         repo_name=basic_info['name'],
@@ -114,7 +113,6 @@ def analyze():
     cached = get_cached_analysis(repo_url)
     if cached:
         return success_response(cached, source='cache')
-
     try:
         analysis_data = analyze_repository(repo_url)
         saved = save_analysis(repo_url, analysis_data)

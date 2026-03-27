@@ -10,13 +10,9 @@ IGNORED_PATHS = {
     'node_modules', 'vendor', 'dist', 'build', 'venv', '.venv', 'tests','test','__tests__','spec','specs'
 }
 
-IGNORED_FILENAME_PATTERNS = [
-    'bootstrap', 'jquery', 'popper', 'fontawesome', 'lodash', 'moment'
-]
+IGNORED_FILENAME_PATTERNS = [ 'bootstrap', 'jquery', 'popper', 'fontawesome', 'lodash', 'moment' ]
 
-IGNORED_TEST_PATTERNS = [
-    'test_', '_test.', '.test.', '.spec.',
-]
+IGNORED_TEST_PATTERNS = [ 'test_', '_test.', '.test.', '.spec.', ]
 
 SUPPORTED_LANGUAGES = {'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Rust', 'Go','Ruby','Swift','Kotlin' }
 
@@ -43,64 +39,88 @@ FUNCTION_LENGTH = {
 MAX_FILES_TO_ANALIZE = 30
 
 class AnalyzerService:
-    
-    def analyze_functions(self, repo, languages):
+
+    def get_supported_languages(self,languages):
         repo_languages = set(languages.keys())
-        langs_to_analyze = repo_languages & SUPPORTED_LANGUAGES
- 
-        if not langs_to_analyze:
-            return {
-                'supported': False,
-                'message': f'Análisis de funciones no soportado para: {", ".join(repo_languages)}',
-                'functions': [],
-                'summary': {'ok': 0, 'warning': 0, 'critical': 0}
-            }
- 
-        extensions = self._get_extensions(langs_to_analyze)
- 
+        return repo_languages & SUPPORTED_LANGUAGES
+    
+    def unsupported_response(self,languages):
+        repo_languages = languages.keys()
+        return {
+            'supported': False,
+            'message': f'Análisis de funciones no soportado para: {", ".join(repo_languages)}',
+            'functions': [],
+            'summary': {'ok': 0, 'warning': 0, 'critical': 0}
+        } 
+    
+    def get_repo_tree(self,repo):
         try:
-            tree = repo.get_git_tree(repo.default_branch, recursive=True)
+            return repo.get_git_tree(repo.default_branch, recursive=True)
         except GithubException:
-            return {
-                'supported': False,
-                'message': 'No se pudo acceder al árbol de archivos.',
-                'functions': [],
-                'summary': {'ok': 0, 'warning': 0, 'critical': 0}
-            }
+            return None
         
-        files_to_analyze = [
+    def tree_error_response(self):
+        return {
+            'supported': False,
+            'message': 'No se pudo acceder al árbol de archivos.',
+            'functions': [],
+            'summary': {'ok': 0, 'warning': 0, 'critical': 0}
+        }
+
+    def get_files_to_analyze(self,tree,extensions):
+        return [
             item for item in tree.tree
             if item.type == 'blob' and self._has_extension(item.path, extensions) and not self._is_ignored(item.path)
         ][:MAX_FILES_TO_ANALIZE]
- 
+        
+    def process_files(self,repo,files):
         functions = []
-        summary   = {'ok': 0, 'warning': 0, 'critical': 0}
- 
+        summary = {'ok': 0, 'warning': 0, 'critical': 0}
+
         def fetch_and_analyze(file_item):
             try:
                 content = repo.get_contents(file_item.path)
                 source_code = content.decoded_content.decode('utf-8', errors='ignore')
             except:
                 return []
-            return self._analyze_file(source_code,file_item.path)
+            return self._analyze_file(source_code, file_item.path)
 
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(fetch_and_analyze, f): f for f in files_to_analyze}
-            
+            futures = [executor.submit(fetch_and_analyze, f) for f in files]
             for future in futures:
-                    file_functions = future.result()
-                    functions.extend(file_functions)
-                    for f in file_functions:
-                        summary[f['status']] += 1
-                         
+                file_functions = future.result()
+                functions.extend(file_functions)
+
+                for f in file_functions:
+                    summary[f['status']] += 1
+        return functions, summary
+    
+    def sort_functions(self, functions):
         order = {'critical': 0, 'warning': 1, 'ok': 2}
-        functions.sort(key=lambda x: order[x['status']])
+        return sorted(functions, key=lambda x: order[x['status']])
  
+    
+    def analyze_functions(self, repo, languages):
+        languages_to_analize = self.get_supported_languages(languages)
+        if not languages_to_analize:
+            return self.unsupported_response(languages)
+         
+        extensions = self._get_extensions(languages_to_analize)
+        tree = self.get_repo_tree(repo)
+        if not tree:
+            return self.tree_error_response()
+        
+        files = self.get_files_to_analyze(tree, extensions)
+
+        functions, summary = self.process_files(repo, files)
+
+        functions = self.sort_functions(functions)
+
         return {
             'supported': True,
             'functions': functions,
             'summary': summary,
-            'files_analyzed': len(files_to_analyze),
+            'files_analyzed': len(files),
         }
 
     # Calcula un score del 0 al 100 
