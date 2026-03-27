@@ -5,6 +5,29 @@ from datetime import timedelta
 
 MAX_COMMITS = 1000
 MAX_CONTRIBUTORS = 10
+ERROR_NOT_FOUND = 404
+EMPTY_ACTIVITY = {
+    'total_commits': 0,
+    'commits_per_month': [],
+    'commits_by_weekday': {},
+    'commits_by_hour': {},
+    'first_commit': None,
+    'last_commit': None,
+    'is_active': False,
+    'commits_per_week_avg': 0,
+}
+
+EMPTY_CONTRIBUTORS = {
+    'total': 0,
+    'bus_factor': 0,
+    'ranking': []
+}
+
+WEEKDAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+ACTIVITY_ACTIVE_DAYS_THRESHOLD = 90
+BUS_FACTOR_THRESHOLD = 80
+
 
 class GithubService:
 
@@ -14,11 +37,11 @@ class GithubService:
         #Como no tenemos token, estamos limitados.
     
     def get_repo(self, repo_url):
-        full_name = self._parse_repo_url(repo_url)
+        full_name = self.parse_repo_url(repo_url)
         try:
             return self.client.get_repo(full_name)
         except GithubException as e:
-            if e.status == 404:
+            if e.status == ERROR_NOT_FOUND:
                 raise ValueError(f"Repositorio '{full_name}' no encontrado.")
             raise Exception(f"Error al conectar con GitHub: {e.data.get('message', str(e))}")
         
@@ -225,7 +248,7 @@ class GithubService:
  
         return result
 
-    def _parse_repo_url(self, url):
+    def parse_repo_url(self, url):
         url = url.strip().rstrip('/')
         if url.endswith('.git'):
             url = url[:-4]
