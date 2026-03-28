@@ -220,6 +220,45 @@ function renderHealth(health) {
     })
 }
 
+function renderContributors(contributors) {
+    const existingList = document.querySelector('.contrib-list')
+    if (existingList) {
+        const canvas = document.createElement('canvas')
+        canvas.id = 'chartContribs'
+        existingList.replaceWith(canvas)
+    }
+
+    const top = contributors.ranking.slice(0, 10)
+    const contribCanvas = document.getElementById('chartContribs')
+    const contribList = document.createElement('div')
+    contribList.className = 'contrib-list'
+
+    top.forEach(c => {
+        const addFmt = c.additions > 999 ? `+${(c.additions/1000).toFixed(1)}k` : `+${c.additions}`
+        const delFmt = c.deletions > 999 ? `-${(c.deletions/1000).toFixed(1)}k` : `-${c.deletions}`
+        contribList.innerHTML += `
+        <div class="contrib-item">
+            <a href="https://github.com/${c.username}" target="_blank" class="contrib-avatar-link">
+                <img src="${c.avatar_url}" alt="${c.username}" class="contrib-avatar"/>
+            </a>
+            <div class="contrib-info">
+                <a href="https://github.com/${c.username}" target="_blank" class="contrib-name">${c.username}</a>
+                <div class="contrib-bar-wrap">
+                    <div class="contrib-bar" style="width:${c.ownership_pct}%"></div>
+                </div>
+            </div>
+            <div class="contrib-stats">
+                <span class="contrib-commits">${c.commits} commits</span>
+                <span class="contrib-lines">
+                    <span class="contrib-add">${addFmt}</span>
+                    <span class="contrib-del">${delFmt}</span>
+                </span>
+            </div>
+        </div>`
+    })
+    contribCanvas.replaceWith(contribList)
+}
+
 function renderCharts(m) {
     const cpm = m.activity.commits_per_month
     charts.commits = new Chart(document.getElementById('chartCommits'), {
@@ -302,19 +341,19 @@ function renderCharts(m) {
         options: chartDefaults()
     })
 
-    const top = m.contributors.ranking.slice(0, 10)
-    charts.contribs = new Chart(document.getElementById('chartContribs'), {
-        type: 'bar',
-        data: {
-            labels: top.map(c => c.username),
-            datasets: [{
-                data: top.map(c => c.commits),
-                backgroundColor: ACCENT2 + CHART_BACKGROUND_COLOR,
-                borderRadius: CHART_BORDER_RADIOUS
-            }]
-        },
-        options: { ...chartDefaults(), indexAxis: 'y' }
-    })
+    // const top = m.contributors.ranking.slice(0, 10)
+    // charts.contribs = new Chart(document.getElementById('chartContribs'), {
+    //     type: 'bar',
+    //     data: {
+    //         labels: top.map(c => c.username),
+    //         datasets: [{
+    //             data: top.map(c => c.commits),
+    //             backgroundColor: ACCENT2 + CHART_BACKGROUND_COLOR,
+    //             borderRadius: CHART_BORDER_RADIOUS
+    //         }]
+    //     },
+    //     options: { ...chartDefaults(), indexAxis: 'y' }
+    // })
 
     charts.issues = new Chart(document.getElementById('chartIssues'), {
         type: 'bar',
@@ -409,6 +448,7 @@ function renderDashboard(analysis) {
     renderStats(m)
     renderExtraStats(m)
     renderCharts(m)
+    renderContributors(m.contributors)
     renderHealth(m.health)
     renderFunctions(m.functions)
 

@@ -269,3 +269,75 @@ header span { color: var(--muted); font-size: 0.85rem; }
   border-color: var(--accent);
   color: var(--text);
 }
+
+.contrib-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.contrib-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    background: var(--bg);
+}
+
+.contrib-avatar-link { flex-shrink: 0; }
+.contrib-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: block;
+}
+
+.contrib-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contrib-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+.contrib-name:hover { color: var(--accent2); }
+
+.contrib-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 0.3rem;
+}
+.contrib-bar {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 2px;
+    min-width: 2px;
+}
+
+.contrib-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    flex-shrink: 0;
+}
+.contrib-commits {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text);
+}
+.contrib-lines { display: flex; gap: 0.4rem; font-size: 0.65rem; }
+.contrib-add { color: var(--ok); }
+.contrib-del { color: var(--critical); }
