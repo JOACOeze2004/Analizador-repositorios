@@ -426,3 +426,10 @@ footer {
 .footer-content a:hover { color: var(--accent); }
 
 .footer-sep { color: var(--border); }
+
+.input-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    text-align: center;
+}
