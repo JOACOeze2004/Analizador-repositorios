@@ -65,6 +65,17 @@ function scoreColor(score) {
     return '#f76f6f'
 }
 
+function toggleModal() {
+    const overlay = document.getElementById('modalOverlay')
+    overlay.classList.toggle('active')
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.getElementById('modalOverlay').classList.remove('active')
+    }
+})
+
 function destroyCharts() {
     Object.values(charts).forEach(c => c.destroy())
     charts = {}

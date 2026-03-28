@@ -29,7 +29,60 @@
             <input type="text" id="repoInput" placeholder="https://github.com/usuario/nombreRepositorio" />
             <button class="btn" id="analyzeBtn" onclick="analyzeRepo()">Analizar</button>
         </div>
-        <p class="input-hint"> ⚠ El repo debe ser público. El análisis se limita a 5000 commits y 50 contributors por temas de rendimiento.</p>
+        <button class="btn-how" id="howBtn" onclick="toggleModal()">¿Cómo funciona?</button>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="toggleModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="toggleModal()">✕</button>
+            <h3>¿Cómo funciona?</h3>
+ 
+            <div class="modal-section">
+                <h4>Requisitos</h4>
+                <ul>
+                    <li>El repositorio debe ser <strong>público</strong></li>
+                    <li>El análisis se limita a <strong>5000 commits</strong> y <strong>50 contributors</strong> por performance</li>
+                </ul>
+            </div>
+ 
+            <div class="modal-section">
+                <h4>Puntaje del repositorio (0-100)</h4>
+                <p>El score se calcula en base a 4 criterios:</p>
+                <div class="score-breakdown">
+                    <div class="score-row">
+                        <span>Salud y estructura</span>
+                        <span class="score-pts">35 pts</span>
+                    </div>
+                    <div class="score-detail">README, licencia, .gitignore, CONTRIBUTING, CHANGELOG, descripción y topics</div>
+                    <div class="score-row">
+                        <span>Calidad de código</span>
+                        <span class="score-pts">25 pts</span>
+                    </div>
+                    <div class="score-detail">Longitud de funciones — cuántas están dentro del límite recomendado (≤20 líneas)</div>
+                    <div class="score-row">
+                        <span>Colaboración</span>
+                        <span class="score-pts">20 pts</span>
+                    </div>
+                    <div class="score-detail">Cantidad de contributors y bus factor (cuántas personas concentran el 80% del trabajo)</div>
+                    <div class="score-row">
+                        <span>Issues & Pull Requests</span>
+                        <span class="score-pts">20 pts</span>
+                    </div>
+                    <div class="score-detail">Tiempo promedio de cierre de issues y merge de PRs</div>
+                </div>
+            </div>
+ 
+            <div class="modal-section">
+                <h4>Etiquetas</h4>
+                <div class="score-labels">
+                    <span class="label-chip" style="color:#4ecca3">Excelente — 85+</span>
+                    <span class="label-chip" style="color:#e8e8f0">Bueno — 70+</span>
+                    <span class="label-chip" style="color:#f7c948">Regular — 50+</span>
+                    <span class="label-chip" style="color:#f76f6f">Necesita mejoras — 30+</span>
+                    <span class="label-chip" style="color:#f76f6f;opacity:0.6">Crítico — menos de 30</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="error-box" id="errorBox"></div>
