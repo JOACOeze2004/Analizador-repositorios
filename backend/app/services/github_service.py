@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from collections import defaultdict
 from datetime import timedelta
 
-MAX_COMMITS = 1000
-MAX_CONTRIBUTORS = 10
+MAX_COMMITS = 5000
+MAX_CONTRIBUTORS = 50
 ERROR_NOT_FOUND = 404
 EMPTY_ACTIVITY = {
     'total_commits': 0,
