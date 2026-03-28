@@ -21,19 +21,53 @@ body {
 }
  
 header {
-  border-bottom: 1px solid var(--border);
-  padding: 1.2rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #2563eb;
+    line-height: 1;
+}
+
 header h1 {
-  font-family: 'Space Mono', monospace;
-  font-size: 1rem;
-  color: var(--accent);
-  letter-spacing: 0.05em;
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
 }
-header span { color: var(--muted); font-size: 0.85rem; }
+
+header span {
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.header-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    transition: border-color 0.2s, color 0.2s;
+}
+.header-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
 
 .hero {
   max-width: 680px;
