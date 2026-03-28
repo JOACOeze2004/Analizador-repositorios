@@ -45,9 +45,6 @@ const FUNC_STATUS = '.func-stat'
 const CHART_BORDER_RADIOUS = 4
 const CHART_BACKGROUND_COLOR = '99'
 
-
-
-
 const WEEK_DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 
 const ACCENT  = '#e8e8f0'
@@ -237,7 +234,7 @@ function renderContributors(contributors) {
         const addFmt = c.additions > 999 ? `+${(c.additions/1000).toFixed(1)}k` : `+${c.additions}`
         const delFmt = c.deletions > 999 ? `-${(c.deletions/1000).toFixed(1)}k` : `-${c.deletions}`
         contribList.innerHTML += `
-        <div class="contrib-item">
+        <div class="contrib-item" data-tooltip="${c.ownership_pct}% de los commits">
             <a href="https://github.com/${c.username}" target="_blank" class="contrib-avatar-link">
                 <img src="${c.avatar_url}" alt="${c.username}" class="contrib-avatar"/>
             </a>
@@ -340,20 +337,6 @@ function renderCharts(m) {
         },
         options: chartDefaults()
     })
-
-    // const top = m.contributors.ranking.slice(0, 10)
-    // charts.contribs = new Chart(document.getElementById('chartContribs'), {
-    //     type: 'bar',
-    //     data: {
-    //         labels: top.map(c => c.username),
-    //         datasets: [{
-    //             data: top.map(c => c.commits),
-    //             backgroundColor: ACCENT2 + CHART_BACKGROUND_COLOR,
-    //             borderRadius: CHART_BORDER_RADIOUS
-    //         }]
-    //     },
-    //     options: { ...chartDefaults(), indexAxis: 'y' }
-    // })
 
     charts.issues = new Chart(document.getElementById('chartIssues'), {
         type: 'bar',

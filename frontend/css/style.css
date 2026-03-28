@@ -341,3 +341,29 @@ header span { color: var(--muted); font-size: 0.85rem; }
 .contrib-lines { display: flex; gap: 0.4rem; font-size: 0.65rem; }
 .contrib-add { color: var(--ok); }
 .contrib-del { color: var(--critical); }
+
+.contrib-item { position: relative; }
+
+.contrib-item::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: auto;
+    top: 30%;
+    left: auto;
+    right: 8rem;
+    transform: translateY(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+
+.contrib-item:hover::after {
+    opacity: 1;
+}
