@@ -35,7 +35,7 @@ const DASHBOARD_ID = 'dashboard'
 const ANALIZEBTN_ID = 'analyzeBtn'
 const SPINNER_WRAP_ID = 'spinnerWrap'
 const SPINNER_MESSAGE_ID = 'spinnerMsg'
-const ERROR_UNKNON_MESSAGE = 'Error desconocido'
+const ERROR_UNKNOWN_MESSAGE = 'Error desconocido'
 const STANDARD_ERROR_MESSAGE = 'No se pudo conectar con el servidor. ¿Está corriendo el backend?'
 const NONE_DISPLAY_SYLE = 'none'
 const FUNC_OK = 'funcOk'
@@ -49,6 +49,13 @@ const WEEK_DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','D
 
 const ACCENT  = '#e8e8f0'
 const ACCENT2 = '#f76f6f'
+
+const ERRORS = {
+    404: 'Repositorio no encontrado. Verificá que la URL este bien o que sea público.',
+    403: 'Límite de requests a GitHub alcanzado. Esperá unos minutos e intentá de nuevo.',
+    502: 'No se pudo conectar con GitHub. Intentá de nuevo en unos segundos.',
+    500: 'Error interno al analizar el repositorio.',
+}
 
 let charts = {}
 
@@ -102,7 +109,7 @@ async function fetchWithRetry(url, options, retries = 2) {
     for (let i = 0; i <= retries; i++) {
         try {
             const res = await fetch(url, options)
-            if (res.ok) return res
+            return res
         } catch(e) {
             if (i === retries) throw e
             await new Promise(r => setTimeout(r, MAX_TIMEOUT))
@@ -135,7 +142,7 @@ async function analyzeRepo() {
         clearInterval(msgInterval)
         const data = await res.json()
         if (!res.ok) {
-            showError(data.error || ERROR_UNKNON_MESSAGE)
+            showError(ERRORS[res.status] || data.error || ERROR_UNKNOWN_MESSAGE)
             return
         }
         renderDashboard(data.analysis)
