@@ -120,7 +120,7 @@ python3 run.py
 #o
 flask run
 
-#6. Levantar el frontend
+#6. Levantar el frontend (en otra terminal)
 python3 -m http.server
 
 #7. Abrí index.html en tu browser o levantá un servidor estático
