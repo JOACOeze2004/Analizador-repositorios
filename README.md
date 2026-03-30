@@ -91,11 +91,12 @@ git clone https://github.com/JOACOeze2004/Analizador-repositorios
 cd Analizador-repositorios
 
 #2. Instalar dependencias ( se pueden crear un venv para no instalar cosas en la máquina de verdad)
-(por si se quiere crear un venv)
+# (por si se quiere crear un venv)
 source venv/bin/activate
 pip install -r requirements.txt
 
 #3. Configurar variables de entorno (opcional pero recomendado para evitar rate limits)
+cd backend/
 nano .env
 # 3.1 Poner en el archivo esto.
 GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxx  # generarlo en github.com/settings/tokens
