@@ -58,17 +58,27 @@ Este proyecto fue una excusa para aplicar y profundizar varios conceptos que o n
 
 ## Screenshots
 
-![Pagina principal](assets/ScreenshotInit.png)
+<div align="center">
 
-![Estadísticas generales](assets/ScreenshotGeneralStats.png)
+<p><i>Página principal donde se ingresa el repositorio a analizar</i></p>
+<img src="assets/ScreenshotInit.png" width="800"/>
 
-![Estadísticas específicas sobre commits por mes, semana, día y hora](assets/ScreenshotSpecificStats1.png)
+<p><i>Dashboard general con score, métricas clave y estado del repositorio</i></p>
+<img src="assets/ScreenshotGeneralStats.png" width="800"/>
 
-![Estadísticas específicas sobre lenguajes, prs/issues, salud del repo y contributors](assets/ScreenshotSpecificStats2.png)
+<p><i>Análisis de actividad: commits por mes, semana, día y hora</i></p>
+<img src="assets/ScreenshotSpecificStats1.png" width="800"/>
 
-![Analizador de funciones por default ](assets/ScreenshotCriticalFunctions.png)
+<p><i>Métricas de lenguajes, issues/PRs, salud del proyecto y contributors</i></p>
+<img src="assets/ScreenshotSpecificStats2.png" width="800"/>
 
-![Analizador de funciones con seccion OK activada](assets/ScreenshotOKFunctions.png)
+<p><i>Análisis de funciones resaltando código crítico que requiere refactorización</i></p>
+<img src="assets/ScreenshotCriticalFunctions.png" width="800"/>
+
+<p><i>Filtro de funciones mostrando código en buen estado (OK)</i></p>
+<img src="assets/ScreenshotOKFunctions.png" width="800"/>
+
+</div>
 
 ---
 
