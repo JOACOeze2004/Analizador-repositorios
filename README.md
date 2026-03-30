@@ -58,15 +58,17 @@ Este proyecto fue una excusa para aplicar y profundizar varios conceptos que o n
 
 ## Screenshots
 
-![Dashboard](assets/ScreenshotInit.png)
+![Pagina principal](assets/ScreenshotInit.png)
 
-![Dashboard](assets/ScreenshotGeneralStats.png)
+![Estadísticas generales](assets/ScreenshotGeneralStats.png)
 
-![Dashboard](assets/ScreenshotSpecificStats.png)
+![Estadísticas específicas sobre commits por mes, semana, día y hora](assets/ScreenshotSpecificStats1.png)
 
-![Dashboard](assets/ScreenshotContribAndCritFunctions.png)
+![Estadísticas específicas sobre lenguajes, prs/issues, salud del repo y contributors](assets/ScreenshotSpecificStats2.png)
 
-![Dashboard](assets/ScreenshotContribAndOKFunctions.png)
+![Analizador de funciones por default ](assets/ScreenshotCriticalFunctions.png)
+
+![Analizador de funciones con seccion OK activada](assets/ScreenshotOKFunctions.png)
 
 ---
 
