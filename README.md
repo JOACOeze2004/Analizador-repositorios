@@ -52,10 +52,19 @@ Este proyecto fue una excusa para aplicar y profundizar varios conceptos que o n
 ## Correrlo localmente
 
 
-
 --- 
 
 ## Screenshots
+
+![Dashboard](assets/ScreenshotInit.png)
+
+![Dashboard](assets/ScreenshotGeneralStats.png)
+
+![Dashboard](assets/ScreenshotSpecificStats.png)
+
+![Dashboard](assets/ScreenshotContribAndCritFunctions.png)
+
+![Dashboard](assets/ScreenshotContribAndOKFunctions.png)
 
 ---
 
