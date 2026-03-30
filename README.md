@@ -49,10 +49,51 @@ Este proyecto fue una excusa para aplicar y profundizar varios conceptos que o n
 - Railway (backend)
 - Netlify (frontend)
 
-## Correrlo localmente
+## Como correrlo localmente
 
+```bash
+#1. Clonar el repo
+git clone https://github.com/JOACOeze2004/Analizador-repositorios
+cd Analizador-repositorios
+ 
+#2. Instalar dependencias ( se pueden crear un venv para no instalar cosas en la maquina de verdad)
+(por si se quiere crear un venv)
+source venv/bin/activate
+pip install -r requirements.txt
+ 
+#3. Configurar variables de entorno (opcional pero recomendado para evitar rate limits)
+nano .env
+# 3.1 Poner en el archivo esto.
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxx  # generarlo en github.com/settings/tokens
+DATABASE_URL=postgresql+psycopg2://analyzer:analyzer123@localhost:5432/repository_analyzer
+SECRET_KEY=dev-secret-key
+DEBUG=True
 
---- 
+#4. Levantar la base de datos por primera vez (recomendado en una terminal separada)
+docker run -d --name analyzer-db \
+  -e POSTGRES_USER=analyzer \
+  -e POSTGRES_PASSWORD=analyzer123 \
+  -e POSTGRES_DB=repository_analyzer \
+  -p 5432:5432 postgres:15
+
+# 4.1 Una vez que hiciste esto, podes ejecutar mas facilmente este comando para ser mas rapido
+docker start analyzer-db
+
+#5. Levantar el backend
+cd backend/
+python3 run.py o flask run
+
+#6. Levantar el frontend
+python3 -m http.server
+ 
+#7. Abrí index.html en tu browser o levantá un servidor estático
+podes ir a tu navegador y poner esto: http://localhost:8000/
+O podes darle dos veces click al index.html
+```
+ 
+> **Nota:** Sin token de GitHub el análisis está limitado a 60 requests/hora. Con token llega a 5000/hora.
+ 
+---
 
 ## Screenshots
 
