@@ -28,6 +28,10 @@ WEEKDAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'
 ACTIVITY_ACTIVE_DAYS_THRESHOLD = 90
 BUS_FACTOR_THRESHOLD = 80
 HOURS_RANGE = range(24)
+DAYS_PER_YEAR = 365
+DAYS_PER_MONTH = 30
+MAX_DAYS_PER_MONTH = 31
+MONTHS_PER_YEAR = 12
 
 
 class GithubService:
@@ -35,7 +39,6 @@ class GithubService:
     def __init__(self, token=None):
         self.client = Github(token) if token else Github()
         # Sin token: 60 requests/hora. Con token: 5000 requests/hora.
-        #Como no tenemos token, estamos limitados.
     
     def get_repo(self, repo_url):
         full_name = self.parse_repo_url(repo_url)
@@ -116,12 +119,17 @@ class GithubService:
 
         delta = last - first
         days = delta.days
-        years = days // 365
-        months = (days % 365) // 30
+        years = days // DAYS_PER_YEAR
+        months = (days % DAYS_PER_YEAR) // DAYS_PER_MONTH
+        remaining_days = days % DAYS_PER_MONTH
 
-        if years > 0:
-            return f'{years}a {months}m'
-        return f'{months} meses'
+        if years >= 1 and months > 0:
+            return f'{years}a {months}m {remaining_days}d'
+        if years >= 1:
+            return f'{years}a {remaining_days}d'        
+        if months > 0 :
+            return f'{months} m {remaining_days} d'
+        return f'{days} días'
 
     def get_commit_activity(self, repo):
         commits = list(repo.get_commits()[:MAX_COMMITS])
