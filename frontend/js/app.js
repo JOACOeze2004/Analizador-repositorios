@@ -1,4 +1,4 @@
-const API = window.location.hostname === 'localhost' ? 'http://localhost:5000': 'https://analizador-repositorios-production-57ab.up.railway.app';
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000': 'https://analizador-de-repositorios.onrender.com';
 
 const WAIT_TIME = 2000 //en ms
 const HIGH_SCORE = 85
