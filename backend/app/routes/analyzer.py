@@ -105,7 +105,9 @@ def save_analysis(repo_url, data):
 
 @analyzer_bp.route('/analyze', methods=['POST'])
 def analyze():
+    print("Entrando a analyze", flush=True)
     repo_url = get_repo_url(request)
+    print(f"repo_url: {repo_url}", flush=True)
     if not repo_url:
         return error_response(ERRORS['MISSING_REPO_URL'], ERROR_BAD_REQUEST)
     
