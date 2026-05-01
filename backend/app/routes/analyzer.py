@@ -111,7 +111,9 @@ def analyze():
     if not repo_url:
         return error_response(ERRORS['MISSING_REPO_URL'], ERROR_BAD_REQUEST)
     
+    print("Buscando cache...", flush=True)
     cached = get_cached_analysis(repo_url)
+    print(f"Cache: {cached}", flush=True)
     if cached:
         return success_response(cached, source='cache')
     try:
