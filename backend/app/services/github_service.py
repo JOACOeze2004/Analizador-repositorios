@@ -185,22 +185,42 @@ class GithubService:
     
     def get_contributors(self, repo):
         try:
-            stats = repo.get_stats_contributors()
+            contributors = list(repo.get_contributors()[:MAX_CONTRIBUTORS])
         except GithubException:
             return EMPTY_CONTRIBUTORS.copy()
 
-        if not stats:
+        if not contributors:
             return EMPTY_CONTRIBUTORS.copy()
 
-        ranking = [self.build_contributor(c) for c in stats]
+        ranking = []
+        for c in contributors:
+            ranking.append({
+                'username': c.login,
+                'avatar_url': c.avatar_url,
+                'commits': c.contributions,
+                'additions': 0,
+                'deletions': 0,
+            })
 
-        ranking.sort(key=lambda x: x['commits'], reverse=True)
-        ranking = ranking[:MAX_CONTRIBUTORS]
+        try:
+            import requests as req
+            token = Config.GITHUB_TOKEN
+            headers = {'Authorization': f'token {token}'} if token else {}
+            url = f'https://api.github.com/repos/{repo.full_name}/stats/contributors'
+            r = req.get(url, headers=headers, timeout=5)
+            if r.status_code == 200:
+                stats_map = {s['author']['login']: s for s in r.json()}
+                for c in ranking:
+                    if c['username'] in stats_map:
+                        weeks = stats_map[c['username']]['weeks']
+                        c['additions'] = sum(w['a'] for w in weeks)
+                        c['deletions'] = sum(w['d'] for w in weeks)
+        except:
+            pass
 
         total_commits = sum(c['commits'] for c in ranking)
-
         for c in ranking:
-            c['ownership_pct'] = round( (c['commits'] / total_commits) * 100, 1 ) if total_commits > 0 else 0
+            c['ownership_pct'] = round((c['commits'] / total_commits) * 100, 1) if total_commits > 0 else 0
 
         bus_factor = self.calculate_bus_factor(ranking)
         return {
